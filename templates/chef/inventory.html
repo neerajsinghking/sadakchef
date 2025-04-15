@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory Status - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-warehouse me-2"></i> Inventory Status</h2>
+        <p class="text-muted">View current ingredient inventory levels</p>
+    </div>
+</div>
+
+<!-- Inventory Summary -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i> Current Inventory ({{ today.strftime('%d %b, %Y') }})</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                        <i class="fas fa-filter me-1"></i> Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Collapse -->
+            <div class="collapse" id="filterCollapse">
+                <div class="card-body bg-light">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <input type="text" id="nameFilter" class="form-control form-control-sm" placeholder="Filter by name...">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="categoryFilter" class="form-select form-select-sm">
+                                <option value="">All Categories</option>
+                                {% set categories = [] %}
+                                {% for ingredient, inventory in inventory_items %}
+                                    {% if ingredient.category not in categories %}
+                                        {% set _ = categories.append(ingredient.category) %}
+                                        <option value="{{ ingredient.category }}">{{ ingredient.category }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="stockFilter" class="form-select form-select-sm">
+                                <option value="">All Stock Levels</option>
+                                <option value="low">Low Stock</option>
+                                <option value="out">Out of Stock</option>
+                                <option value="in">In Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="resetFilter" class="btn btn-sm btn-outline-secondary w-100">
+                                <i class="fas fa-times me-1"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                {% if inventory_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>Ingredient</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Unit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ingredient, inventory in inventory_items %}
+                            <tr>
+                                <td>{{ ingredient.name }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if ingredient.category == 'Spices' %}bg-primary
+                                        {% elif ingredient.category == 'Vegetables' %}bg-success
+                                        {% elif ingredient.category == 'Meat' %}bg-danger
+                                        {% elif ingredient.category == 'Dairy' %}bg-info
+                                        {% elif ingredient.category == 'Grains' %}bg-warning text-dark
+                                        {% elif ingredient.category == 'Herbs' %}bg-success
+                                        {% elif ingredient.category == 'Oils' %}bg-secondary
+                                        {% else %}bg-dark
+                                        {% endif %}">
+                                        {{ ingredient.category }}
+                                    </span>
+                                </td>
+                                <td class="{% if inventory.closing_stock < 5 %}low-stock{% endif %}">
+                                    <strong>{{ inventory.closing_stock }}</strong>
+                                </td>
+                                <td>{{ ingredient.unit }}</td>
+                                <td>
+                                    {% if inventory.closing_stock <= 0 %}
+                                    <span class="badge bg-danger">Out of Stock</span>
+                                    {% elif inventory.closing_stock < 5 %}
+                                    <span class="badge bg-warning text-dark">Low Stock</span>
+                                    {% else %}
+                                    <span class="badge bg-success">In Stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-warehouse fa-3x text-muted mb-3"></i>
+                    <h5>No Inventory Data Available</h5>
+                    <p>Please contact the admin if you believe this is an error.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory Categories -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-th-large me-2"></i> Inventory by Category</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% set categories_data = {} %}
+                    {% for ingredient, inventory in inventory_items %}
+                        {% if ingredient.category not in categories_data %}
+                            {% set _ = categories_data.update({ingredient.category: [(ingredient, inventory)]}) %}
+                        {% else %}
+                            {% set _ = categories_data[ingredient.category].append((ingredient, inventory)) %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for category, items in categories_data.items() %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header 
+                                {% if category == 'Spices' %}bg-primary text-white
+                                {% elif category == 'Vegetables' %}bg-success text-white
+                                {% elif category == 'Meat' %}bg-danger text-white
+                                {% elif category == 'Dairy' %}bg-info text-white
+                                {% elif category == 'Grains' %}bg-warning
+                                {% elif category == 'Herbs' %}bg-success text-white
+                                {% elif category == 'Oils' %}bg-secondary text-white
+                                {% else %}bg-dark text-white
+                                {% endif %}">
+                                <h5 class="mb-0">{{ category }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Ingredient</th>
+                                                <th>Stock</th>
+                                                <th>Unit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for ingredient, inventory in items %}
+                                            <tr>
+                                                <td>{{ ingredient.name }}</td>
+                                                <td class="{% if inventory.closing_stock < 5 %}low-stock{% endif %}">
+                                                    {{ inventory.closing_stock }}
+                                                </td>
+                                                <td>{{ ingredient.unit }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <small class="text-muted">{{ items|length }} item{% if items|length != 1 %}s{% endif %}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Alert -->
+{% set low_stock_items = [] %}
+{% for ingredient, inventory in inventory_items %}
+    {% if inventory.closing_stock < 5 %}
+        {% set _ = low_stock_items.append((ingredient, inventory)) %}
+    {% endif %}
+{% endfor %}
+
+{% if low_stock_items %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Low Stock Alert</h5>
+            </div>
+            <div class="card-body">
+                <p>The following ingredients are running low or out of stock. Please inform the admin to arrange for more supplies.</p>
+
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Ingredient</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Unit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ingredient, inventory in low_stock_items %}
+                            <tr>
+                                <td>{{ ingredient.name }}</td>
+                                <td>{{ ingredient.category }}</td>
+                                <td class="{% if inventory.closing_stock <= 0 %}text-danger{% else %}text-warning{% endif %} fw-bold">
+                                    {{ inventory.closing_stock }}
+                                </td>
+                                <td>{{ ingredient.unit }}</td>
+                                <td>
+                                    {% if inventory.closing_stock <= 0 %}
+                                    <span class="badge bg-danger">Out of Stock</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">Low Stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // DataTable with custom filtering
+    var dataTable = $('.data-table').DataTable();
+
+    // Name filter
+    $('#nameFilter').on('keyup', function() {
+        dataTable.column(0).search(this.value).draw();
+    });
+
+    // Category filter
+    $('#categoryFilter').on('change', function() {
+        dataTable.column(1).search(this.value).draw();
+    });
+
+    // Stock level filter
+    $('#stockFilter').on('change', function() {
+        const value = $(this).val();
+        if (value === 'low') {
+            dataTable.column(4).search('Low Stock').draw();
+        } else if (value === 'out') {
+            dataTable.column(4).search('Out of Stock').draw();
+        } else if (value === 'in') {
+            dataTable.column(4).search('In Stock').draw();
+        } else {
+            dataTable.column(4).search('').draw();
+        }
+    });
+
+    // Reset filters
+    $('#resetFilter').on('click', function() {
+        $('#nameFilter').val('');
+        $('#categoryFilter').val('');
+        $('#stockFilter').val('');
+        dataTable.search('').columns().search('').draw();
+    });
+});
+</script>
+{% endblock %}

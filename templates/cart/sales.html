@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+
+{% block title %}Daily Sales - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-coins me-2"></i> Daily Sales Report</h2>
+        <p class="text-muted">Record and track your daily sales and revenue</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Add New Sales Form -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Add Today's Sales</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('cart_sales') }}" id="salesForm">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="recipe_id" class="form-label">{{ form.recipe_id.label }}</label>
+                        {{ form.recipe_id(class="form-select") }}
+                        {% if form.recipe_id.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.recipe_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="kg_unsold" class="form-label">{{ form.kg_unsold.label }}</label>
+                        {{ form.kg_unsold(class="form-control") }}
+                        {% if form.kg_unsold.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.kg_unsold.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="cash_collected" class="form-label">{{ form.cash_collected.label }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            {{ form.cash_collected(class="form-control") }}
+                        </div>
+                        {% if form.cash_collected.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.cash_collected.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Summary:</strong></p>
+                                <div id="salesCalculations">
+                                    <p class="mb-1">Taken: <span id="kgTaken">0</span> kg</p>
+                                    <p class="mb-1">Unsold: <span id="kgUnsold">0</span> kg</p>
+                                    <p class="mb-1">Sold: <span id="kgSold">0</span> kg</p>
+                                    <p class="mb-1">Revenue: ₹<span id="totalRevenue">0</span></p>
+                                    <p class="mb-0">Your Incentive: ₹<span id="incentive">0</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Sales Guidelines -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Sales Guidelines</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Record sales at the end of each day
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Accurately weigh and report unsold biryani
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Count cash properly before submission
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Report any issues or customer feedback
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Your incentive is calculated automatically
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sales Records -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i> Your Sales History</h5>
+            </div>
+            <div class="card-body">
+                {% if sales %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Recipe</th>
+                                <th>Taken</th>
+                                <th>Sold</th>
+                                <th>Revenue</th>
+                                <th>Incentive</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale, recipe in sales %}
+                            <tr>
+                                <td>{{ sale.date.strftime('%d %b, %Y') }}</td>
+                                <td>{{ recipe.name }}</td>
+                                <td>{{ sale.kg_taken }} kg</td>
+                                <td>
+                                    {{ sale.kg_sold }} kg
+                                    <div class="progress mt-1" style="height: 6px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ (sale.kg_sold / sale.kg_taken * 100)|round if sale.kg_taken > 0 else 0 }}%" 
+                                             aria-valuenow="{{ (sale.kg_sold / sale.kg_taken * 100)|round if sale.kg_taken > 0 else 0 }}" 
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <small class="text-muted">{{ (sale.kg_sold / sale.kg_taken * 100)|round if sale.kg_taken > 0 else 0 }}% sold</small>
+                                </td>
+                                <td>₹{{ sale.total_revenue }}</td>
+                                <td>₹{{ sale.total_incentive }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5>No Sales Records</h5>
+                    <p>Record your first sales using the form on the left.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Sales Summary -->
+        {% if sales %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Your Sales Summary</h5>
+            </div>
+            <div class="card-body">
+                {% set total_revenue = namespace(value=0) %}
+                {% set total_incentive = namespace(value=0) %}
+                {% set total_kg_sold = namespace(value=0) %}
+                {% set recipe_totals = namespace(dict={}) %}
+                
+                {% for sale, recipe in sales %}
+                    {% set total_revenue.value = total_revenue.value + sale.total_revenue %}
+                    {% set total_incentive.value = total_incentive.value + sale.total_incentive %}
+                    {% set total_kg_sold.value = total_kg_sold.value + sale.kg_sold %}
+                    
+                    {% if recipe.name in recipe_totals.dict %}
+                        {% set _ = recipe_totals.dict.update({recipe.name: recipe_totals.dict[recipe.name] + sale.kg_sold}) %}
+                    {% else %}
+                        {% set _ = recipe_totals.dict.update({recipe.name: sale.kg_sold}) %}
+                    {% endif %}
+                {% endfor %}
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <h3>₹{{ total_revenue.value|round(2) }}</h3>
+                                <p class="text-muted mb-0">Total Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <h3>₹{{ total_incentive.value|round(2) }}</h3>
+                                <p class="text-muted mb-0">Total Incentive</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <h3>{{ total_kg_sold.value|round(2) }} kg</h3>
+                                <p class="text-muted mb-0">Total Sold</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Sales by Recipe</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Recipe</th>
+                                        <th>Quantity Sold</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for recipe, qty in (recipe_totals.dict|dictsort(by='value', reverse=true)) %}
+                                    <tr>
+                                        <td>{{ recipe }}</td>
+                                        <td>{{ qty|round(2) }} kg</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Monthly Trend</h5>
+                        <p class="text-muted">Coming soon: Monthly sales trend chart</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up the sales calculation logic
+    const form = document.getElementById('salesForm');
+    if (!form) return;
+    
+    const recipeSelect = document.getElementById('recipe_id');
+    const kgUnsoldInput = document.getElementById('kg_unsold');
+    const cashCollectedInput = document.getElementById('cash_collected');
+    
+    // Elements for displaying calculations
+    const kgTakenSpan = document.getElementById('kgTaken');
+    const kgUnsoldSpan = document.getElementById('kgUnsold');
+    const kgSoldSpan = document.getElementById('kgSold');
+    const totalRevenueSpan = document.getElementById('totalRevenue');
+    const incentiveSpan = document.getElementById('incentive');
+    
+    // Get recipes data
+    let recipes = {};
+    {% for recipe in recipes %}
+    recipes[{{ recipe.id }}] = {
+        name: "{{ recipe.name }}",
+        selling_price: {{ recipe.selling_price }},
+        base_quantity: {{ recipe.base_quantity }}
+    };
+    {% endfor %}
+    
+    // User data
+    const incentivePerKg = {{ current_user.incentive_per_kg or 0 }};
+    
+    // Function to update all calculations
+    function updateCalculations() {
+        const selectedRecipeId = parseInt(recipeSelect.value) || 0;
+        const kgUnsold = parseFloat(kgUnsoldInput.value) || 0;
+        const cashCollected = parseFloat(cashCollectedInput.value) || 0;
+        
+        // Skip calculations if no recipe is selected
+        if (!selectedRecipeId || !recipes[selectedRecipeId]) {
+            kgTakenSpan.textContent = '0';
+            kgUnsoldSpan.textContent = '0';
+            kgSoldSpan.textContent = '0';
+            totalRevenueSpan.textContent = '0';
+            incentiveSpan.textContent = '0';
+            return;
+        }
+        
+        const recipe = recipes[selectedRecipeId];
+        
+        // Get the kg_taken from the last refill
+        let kgTaken = {{ last_refill.quantity if last_refill else 0 }};
+        // Default to base quantity if no refill
+        if (kgTaken === 0) kgTaken = recipe.base_quantity;
+        
+        // Calculate sold quantity and revenue
+        const kgSold = Math.max(0, kgTaken - kgUnsold);
+        const totalRevenue = cashCollected;
+        const incentive = kgSold * incentivePerKg;
+        
+        // Update the spans with calculated values
+        kgTakenSpan.textContent = kgTaken.toFixed(2);
+        kgUnsoldSpan.textContent = kgUnsold.toFixed(2);
+        kgSoldSpan.textContent = kgSold.toFixed(2);
+        totalRevenueSpan.textContent = totalRevenue.toFixed(2);
+        incentiveSpan.textContent = incentive.toFixed(2);
+    }
+    
+    if (kgUnsoldInput && cashCollectedInput) {
+        kgUnsoldInput.addEventListener('input', updateCalculations);
+        cashCollectedInput.addEventListener('input', updateCalculations);
+        recipeSelect.addEventListener('change', updateCalculations);
+        
+        // Initial calculation
+        updateCalculations();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block title %}Customer Feedback - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-comment-alt me-2"></i> Customer Feedback</h2>
+        <p class="text-muted">Manage and respond to customer feedback</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Feedback QR Code -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i> Feedback QR Code</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="qr-code-container mb-3">
+                    <img src="data:image/png;base64,{{ qr_code }}" alt="Feedback QR Code" class="img-fluid qr-code-img">
+                </div>
+                <p>Scan this QR code to submit feedback</p>
+                <div class="d-grid gap-2">
+                    <a href="data:image/png;base64,{{ qr_code }}" download="biryani_feedback_qr.png" class="btn btn-primary">
+                        <i class="fas fa-download me-2"></i> Download QR Code
+                    </a>
+                    <p class="text-muted small mt-2">Print and display this QR code on carts for customer feedback</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feedback Analysis -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Feedback Analysis</h5>
+            </div>
+            <div class="card-body">
+                {% if feedbacks %}
+                    {% set complaint_count = 0 %}
+                    {% set suggestion_count = 0 %}
+                    {% set appreciation_count = 0 %}
+                    {% set action_taken_count = 0 %}
+                    
+                    {% for feedback in feedbacks %}
+                        {% if feedback.feedback_type == 'complaint' %}
+                            {% set complaint_count = complaint_count + 1 %}
+                        {% elif feedback.feedback_type == 'suggestion' %}
+                            {% set suggestion_count = suggestion_count + 1 %}
+                        {% elif feedback.feedback_type == 'appreciation' %}
+                            {% set appreciation_count = appreciation_count + 1 %}
+                        {% endif %}
+                        
+                        {% if feedback.action_taken %}
+                            {% set action_taken_count = action_taken_count + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% set total_count = feedbacks|length %}
+                    {% set action_needed_count = total_count - action_taken_count %}
+                
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="card bg-danger bg-opacity-10">
+                            <div class="card-body py-3">
+                                <h3>{{ complaint_count }}</h3>
+                                <p class="mb-0">Complaints</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="card bg-warning bg-opacity-10">
+                            <div class="card-body py-3">
+                                <h3>{{ suggestion_count }}</h3>
+                                <p class="mb-0">Suggestions</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="card bg-success bg-opacity-10">
+                            <div class="card-body py-3">
+                                <h3>{{ appreciation_count }}</h3>
+                                <p class="mb-0">Appreciations</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="card bg-info bg-opacity-10">
+                            <div class="card-body py-3">
+                                <h3>{{ action_needed_count }}</h3>
+                                <p class="mb-0">Need Action</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress mb-3" style="height: 25px;">
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ (complaint_count / total_count * 100)|round }}%">
+                        {{ complaint_count }}
+                    </div>
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (suggestion_count / total_count * 100)|round }}%">
+                        {{ suggestion_count }}
+                    </div>
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ (appreciation_count / total_count * 100)|round }}%">
+                        {{ appreciation_count }}
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <p class="mb-1">Action Status</p>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ (action_taken_count / total_count * 100)|round }}%">
+                            Addressed ({{ action_taken_count }})
+                        </div>
+                        <div class="progress-bar bg-secondary" role="progressbar" style="width: {{ (action_needed_count / total_count * 100)|round }}%">
+                            Pending ({{ action_needed_count }})
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                    <p>No feedback data available for analysis.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Feedback List -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-comments me-2"></i> Feedback List</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                        <i class="fas fa-filter me-1"></i> Filter
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filter Collapse -->
+            <div class="collapse" id="filterCollapse">
+                <div class="card-body bg-light">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <select id="feedbackTypeFilter" class="form-select form-select-sm">
+                                <option value="">All Types</option>
+                                <option value="complaint">Complaints</option>
+                                <option value="suggestion">Suggestions</option>
+                                <option value="appreciation">Appreciations</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="actionFilter" class="form-select form-select-sm">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending Action</option>
+                                <option value="addressed">Action Taken</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button id="resetFilter" class="btn btn-sm btn-outline-secondary w-100">
+                                <i class="fas fa-times me-1"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                {% if feedbacks %}
+                <div class="table-responsive">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Thela ID</th>
+                                <th>Type</th>
+                                <th>Comments</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feedback in feedbacks %}
+                            <tr>
+                                <td>{{ feedback.date.strftime('%d %b, %Y') }}</td>
+                                <td>{{ feedback.thela_id }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if feedback.feedback_type == 'complaint' %}bg-danger
+                                        {% elif feedback.feedback_type == 'suggestion' %}bg-warning text-dark
+                                        {% elif feedback.feedback_type == 'appreciation' %}bg-success
+                                        {% endif %}">
+                                        {{ feedback.feedback_type|capitalize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;">{{ feedback.comments }}</div>
+                                </td>
+                                <td>
+                                    {% if feedback.action_taken %}
+                                    <span class="badge bg-success">Addressed</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not feedback.action_taken %}
+                                    <button class="btn btn-sm btn-primary feedback-action-btn" 
+                                            data-feedback-id="{{ feedback.id }}" 
+                                            data-feedback-details="{{ feedback.comments }}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#feedbackActionModal">
+                                        <i class="fas fa-reply"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-info" 
+                                            data-bs-toggle="popover" 
+                                            data-bs-placement="left" 
+                                            title="Action Taken" 
+                                            data-bs-content="{{ feedback.action_taken }}">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                    <h5>No Feedback Received</h5>
+                    <p>Distribute QR codes on carts to start collecting customer feedback.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Feedback Best Practices -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i> Feedback Management Best Practices</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check-circle text-success me-2"></i> Responding to Complaints</h6>
+                        <ul class="small">
+                            <li>Acknowledge the issue promptly</li>
+                            <li>Investigate the root cause</li>
+                            <li>Communicate the resolution to the team</li>
+                            <li>Follow up with corrective actions</li>
+                            <li>Monitor for recurrence</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check-circle text-success me-2"></i> Using Feedback for Improvement</h6>
+                        <ul class="small">
+                            <li>Review feedback patterns regularly</li>
+                            <li>Implement suggested improvements</li>
+                            <li>Share positive feedback with team members</li>
+                            <li>Update SOPs based on recurring feedback</li>
+                            <li>Use feedback for training purposes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Action Modal -->
+<div class="modal fade" id="feedbackActionModal" tabindex="-1" aria-labelledby="feedbackActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="feedbackActionModalLabel">Take Action on Feedback</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('update_feedback', feedback_id=0) }}" id="feedback-action-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="feedback_id" id="feedback_id" value="">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Feedback Details:</label>
+                        <p id="feedback-details" class="border p-3 rounded bg-light"></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="action_taken" class="form-label">Action Taken:</label>
+                        <textarea name="action_taken" id="action_taken" class="form-control" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Save Action</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // DataTable with custom filtering
+    var dataTable = $('.data-table').DataTable();
+    
+    // Type filter
+    $('#feedbackTypeFilter').on('change', function() {
+        var type = $(this).val();
+        dataTable.column(2).search(type).draw();
+    });
+    
+    // Action status filter
+    $('#actionFilter').on('change', function() {
+        var status = $(this).val();
+        if (status === 'pending') {
+            dataTable.column(4).search('Pending').draw();
+        } else if (status === 'addressed') {
+            dataTable.column(4).search('Addressed').draw();
+        } else {
+            dataTable.column(4).search('').draw();
+        }
+    });
+    
+    // Reset filters
+    $('#resetFilter').on('click', function() {
+        $('#feedbackTypeFilter').val('');
+        $('#actionFilter').val('');
+        dataTable.search('').columns().search('').draw();
+    });
+    
+    // Feedback action form handling
+    $('.feedback-action-btn').on('click', function() {
+        var feedbackId = $(this).data('feedback-id');
+        var feedbackDetails = $(this).data('feedback-details');
+        
+        $('#feedback_id').val(feedbackId);
+        $('#feedback-details').text(feedbackDetails);
+        $('#feedback-action-form').attr('action', "{{ url_for('update_feedback', feedback_id=0) }}".replace('0', feedbackId));
+    });
+});
+</script>
+{% endblock %}

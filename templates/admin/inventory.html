@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory Management - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-warehouse me-2"></i> Inventory Management</h2>
+        <p class="text-muted">Monitor and track your ingredient inventory</p>
+    </div>
+</div>
+
+<!-- Inventory Summary Cards -->
+<div class="row mb-4">
+    {% set total_items = inventory_items|length %}
+    {% set low_stock_count = 0 %}
+    {% set total_value = 0 %}
+    
+    {% for ingredient, inventory in inventory_items %}
+        {% if inventory.closing_stock < 5 %}
+            {% set low_stock_count = low_stock_count + 1 %}
+        {% endif %}
+        {% set item_value = ingredient.unit == 'kg' and inventory.closing_stock * 100 or inventory.closing_stock * 50 %}
+        {% set total_value = total_value + item_value %}
+    {% endfor %}
+
+    <div class="col-md-3">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-primary">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ total_items }}</p>
+                    <p class="stats-text">Total Items</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ low_stock_count }}</p>
+                    <p class="stats-text">Low Stock Items</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-success">
+                    <i class="fas fa-rupee-sign"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">₹{{ total_value|int }}</p>
+                    <p class="stats-text">Est. Inventory Value</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-info">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ today.strftime('%d %b, %Y') }}</p>
+                    <p class="stats-text">Inventory Date</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Inventory Table -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i> Current Inventory</h5>
+                <a href="{{ url_for('admin_purchases') }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-plus-circle me-1"></i> Add Purchase
+                </a>
+            </div>
+            <div class="card-body">
+                {% if inventory_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>Ingredient</th>
+                                <th>Category</th>
+                                <th>Opening</th>
+                                <th>Purchased</th>
+                                <th>Used</th>
+                                <th>Current Stock</th>
+                                <th>Unit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ingredient, inventory in inventory_items %}
+                            <tr>
+                                <td>{{ ingredient.name }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if ingredient.category == 'Spices' %}bg-primary
+                                        {% elif ingredient.category == 'Vegetables' %}bg-success
+                                        {% elif ingredient.category == 'Meat' %}bg-danger
+                                        {% elif ingredient.category == 'Dairy' %}bg-info
+                                        {% elif ingredient.category == 'Grains' %}bg-warning text-dark
+                                        {% elif ingredient.category == 'Herbs' %}bg-success
+                                        {% elif ingredient.category == 'Oils' %}bg-secondary
+                                        {% else %}bg-dark
+                                        {% endif %}">
+                                        {{ ingredient.category }}
+                                    </span>
+                                </td>
+                                <td>{{ inventory.opening_stock }}</td>
+                                <td>{{ inventory.purchased }}</td>
+                                <td>{{ inventory.used }}</td>
+                                <td class="{% if inventory.closing_stock < 5 %}low-stock{% endif %}">
+                                    <strong>{{ inventory.closing_stock }}</strong>
+                                </td>
+                                <td>{{ ingredient.unit }}</td>
+                                <td>
+                                    {% if inventory.closing_stock <= 0 %}
+                                    <span class="badge bg-danger">Out of Stock</span>
+                                    {% elif inventory.closing_stock < 5 %}
+                                    <span class="badge bg-warning text-dark">Low Stock</span>
+                                    {% else %}
+                                    <span class="badge bg-success">In Stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-warehouse fa-3x text-muted mb-3"></i>
+                    <h5>No Inventory Data Available</h5>
+                    <p>Add ingredients and purchases to start tracking inventory.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Inventory Dashboard -->
+    <div class="col-md-4">
+        <!-- Inventory Chart -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Inventory Levels</h5>
+            </div>
+            <div class="card-body">
+                {% if inventory_items %}
+                    {% set chart_items = [] %}
+                    {% set chart_stocks = [] %}
+                    
+                    {% for ingredient, inventory in inventory_items %}
+                        {% if loop.index <= 10 %}  <!-- Limit to 10 items -->
+                            {% set _ = chart_items.append(ingredient.name) %}
+                            {% set _ = chart_stocks.append(inventory.closing_stock) %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <canvas id="inventoryChart" class="dashboard-chart" 
+                            data-items="{{ chart_items|tojson }}" 
+                            data-stocks="{{ chart_stocks|tojson }}"></canvas>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                    <p>No data available for chart visualization.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin_purchases') }}" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart me-2"></i> Record New Purchase
+                    </a>
+                    <a href="{{ url_for('admin_ingredients') }}" class="btn btn-success">
+                        <i class="fas fa-plus-circle me-2"></i> Add New Ingredient
+                    </a>
+                    <a href="{{ url_for('admin_export') }}" class="btn btn-info">
+                        <i class="fas fa-file-export me-2"></i> Export Inventory Data
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inventory Tips -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i> Inventory Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Monitor low stock items regularly
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Purchase ingredients before they run out
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Track inventory usage patterns
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Check for any discrepancies between system and physical inventory
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory System Information -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Inventory System Logic</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Automatic Updates</h5>
+                        <p>The inventory system automatically tracks and updates based on:</p>
+                        <ul>
+                            <li>Purchases added by admin (increases inventory)</li>
+                            <li>Recipe preparations by kitchen (decreases inventory based on SOP)</li>
+                            <li>Daily inventory snapshots (taken at midnight)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Example Scenario</h5>
+                        <p>For example, when a chef prepares 10kg of Chicken Biryani:</p>
+                        <ul>
+                            <li>System automatically deducts ingredients based on the SOP</li>
+                            <li>For 10kg Biryani with 5kg rice in SOP, system deducts 10kg rice</li>
+                            <li>All other ingredients are scaled and deducted proportionally</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <h5 class="alert-heading"><i class="fas fa-lightbulb me-2"></i> Note:</h5>
+                    <p class="mb-0">The inventory system relies on accurate SOPs and careful recording of all purchases. Regular physical inventory checks are still recommended to ensure accuracy.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

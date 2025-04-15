@@ -1,0 +1,249 @@
+**LOGIN PAGE**  
+## 🔐 Admin Panel (1 Manager)
+
+### 📊 Admin Dashboard Features:
+1. **Monitoring** of all operations.
+2. **SOP Management**:
+   - Add New SOP  
+3. **Staff Management**:
+   - Add/Delete Staff List  
+4. **Ingredient Management**:
+   - Add/Delete New Ingredients  
+5. **Inventory Monitoring**:
+   - Live Inventory Status  
+6. **Kitchen and Thela Monitoring**:
+   - Live performance of thelas and chefs  
+7. **Supplier Purchase Management**:
+   - Purchases from different suppliers are added  
+   - Inventory auto-updates accordingly  
+8. **Feedback Page**:
+   - List of Feedbacks  
+   - QR Code for printing or download (to stick on cart)  
+9. **Database Tables Excel Export**:
+   - Download Excel file of any table via dropdown  
+
+---
+
+## 👨‍🍳 Chef Panel (2 Staff)
+
+1. **Activity Monitoring**  
+2. **Refill Request Acceptance Only**:
+   - Auto ingredient measurement as per SOP  
+   - Press “Prepared” button after cooking  
+   - Inventory auto-decreases based on SOP (after preparation)  
+3. **Live Inventory View**  
+4. **SOP Calculator**  
+5. **Attendance Form**:
+   - To be approved by Admin  
+   - Must be filled before the end of the day  
+   - Not filling = Marked Absent  
+6. **View Past Week Attendance**  
+7. **Live Refill Status**:
+   - `Requested → Taken by Chef → Prepared → Taken by Cart`  
+   - (This ensures each stage is traceable, and responsibility is clear)
+
+---
+
+## 🛒 Cart Panel (3 Staff)
+
+1. **Activity Monitoring**  
+2. **Send Refill Request**  
+3. **Daily Sales Entry**  
+4. **Attendance Form**:
+   - To be approved by Admin  
+   - Must be filled before the end of the day  
+   - Not filling = Marked Absent  
+5. **View Past Week Attendance**  
+6. **Live Refill Status**:
+   - `Requested → Taken by Chef → Prepared → Taken by Cart`  
+
+---
+
+## 📄 Forms and Data Collections
+
+### 🔁 Refill Form (Filled by Cart Staff)
+- **Fields to Fill**:
+  - Name  
+  - Kg Request  
+  - Recipe  
+- **Auto-filled**:
+  - Date  
+  - Thela ID (Assigned by Admin)  
+  - Location (Assigned by Admin)  
+  - Time of Request  
+  - Fulfilled Time (when cart receives & accepts)
+
+---
+
+### 🍳 Kitchen Production (Auto Data)  
+Chef clicks only "Accept" & "Prepared"  
+- Date  
+- Batch No (Auto-generated)  
+- Cooked By (Chef Name)  
+- Time Started (Accepted Time)  
+- Time Completed (Prepared Time)  
+- Quantity Cooked (kg) – from Refill Request  
+- Recipe – from Refill Request  
+
+---
+
+### 💰 Daily Sales Form (Filled by Cart Staff)  
+- **To Fill**:
+  - Thela ID  
+  - Unsold  
+  - Recipe  
+  - Cash Collected  
+- **Auto-filled**:
+  - Date  
+  - Name  
+  - Location  
+  - Kg Taken (sum of day’s Refill Requests)  
+  - Kg Sold (Taken - Unsold)  
+  - UPI Collected (Recipe Rate × Kg Sold - Cash)  
+  - Total Revenue (UPI + Cash)  
+  - Incentive per kg (Assigned by Admin)  
+  - Total Incentive (Incentive × Kg Sold)  
+
+---
+
+### 🧍 Staff Attendance Form  
+- Date  
+- Thela/Chef  
+- ID  
+- Staff Name (auto-filled)  
+- Present (Yes/No)  
+
+---
+
+### 📦 Inventory Tracker (Auto Data @12AM Daily)  
+- Date  
+- Item  
+- Opening Stock (Previous day 12AM data)  
+- Purchased (Today Purchase)  
+- Used Today (Counted from SOP)  
+- Closing Stock (Auto)  
+
+> **Note:** If no purchase or usage update, system auto-stops (e.g., holiday)  
+
+---
+
+### 📒 Supplier Purchases by admin  
+- Date (Auto)  
+- Vendor Name  
+- Ingredient Supplied  (Dropdown)  
+- Category (auto)  
+- Unit  (Dropdown)  
+- Quantity  
+- Rate/Unit  
+- Total Amount (Auto)  
+- Payment Made  
+- Payment Mode  
+- Balance Amount  
+
+---
+
+### 👥 User Add by Admin  
+> *If Cart Staff: Take Location & Incentive; else (Chef): NA*
+
+- Username  
+- Password  
+- Name  
+- Chef/Cart (Dropdown)  
+- Thela ID / Chef ID  (Autogen)  
+- Mobile No  
+- Salary  
+
+---
+
+### 📜 Add SOP by Admin:  
+Recipe Name, Base Quantity, Selling Price, Description  
+
+Add Ingredients Button:  
+Ingredient (dropdown), Category (auto), Unit (auto), Quantity, Note  
+
+---
+
+### 🌿 Add Ingredients by Admin:  
+(All manual fields — no dropdowns or auto)  
+
+Name, Category, Unit  
+
+---
+
+### 🧾 Customer Feedback Form (via QR Code)  
+- Date  
+- Thela ID  
+- Feedback Type  
+- Comments  
+- Action Taken  
+
+---
+
+## 📋 SOP Example – Ingredients (For 5 kg **Chicken Biryani**)
+
+| Ingredient             | Quantity              |
+|------------------------|------------------------|
+| Basmati Rice           | 5 kg                  |
+| Chicken (with bone)    | 7–8 kg                |
+| Curd (Dahi)            | 1.5 kg                |
+| Onion (sliced)         | 2.5 kg                |
+| Tomato (chopped)       | 1 kg                  |
+| Ginger-Garlic Paste    | 300 grams             |
+| Green Chilies          | 100 grams             |
+| Lemon Juice            | 3–4 lemons            |
+| Biryani Masala (ready) | 200 grams             |
+| Red Chili Powder       | 100 grams             |
+| Turmeric Powder        | 50 grams              |
+| Garam Masala           | 50 grams              |
+| Coriander + Mint       | 200 grams each        |
+| Oil + Ghee Mix         | 750 ml – 1 litre      |
+| Salt                   | As per taste          |
+| Kesar + Milk           | Optional (for aroma)  |
+
+---
+
+## 📋 SOP Example – Ingredients (For 5 kg **Veg Biryani**)
+
+| Ingredient               | Quantity              |
+|--------------------------|------------------------|
+| Basmati Rice             | 5 kg                  |
+| Mixed Vegetables (Carrot, Beans, Potato, etc.) | 4–5 kg |
+| Curd (Dahi)              | 1.5 kg                |
+| Onion (sliced)           | 2.5 kg                |
+| Tomato (chopped)         | 1 kg                  |
+| Ginger-Garlic Paste      | 300 grams             |
+| Green Chilies            | 100 grams             |
+| Lemon Juice              | 3–4 lemons            |
+| Biryani Masala (ready)   | 200 grams             |
+| Red Chili Powder         | 100 grams             |
+| Turmeric Powder          | 50 grams              |
+| Garam Masala             | 50 grams              |
+| Coriander + Mint Leaves  | 200 grams each        |
+| Oil + Ghee Mix           | 750 ml – 1 litre      |
+| Salt                     | As per taste          |
+| Kesar + Milk             | Optional (for aroma)  |
+
+---
+
+## 📦 Inventory System Logic (Auto)
+1. If 10kg rice in stock & 20kg purchased → System auto-updates to **30kg**.  
+2. If Chef prepares 10kg Chicken Biryani → Based on SOP:  
+   - System auto-deducts quantity from inventory (e.g., 5kg rice)  
+3. No manual tracking needed for stock usage—**system calculates automatically from SOP**  
+4. **Inventory Alert:** If stock falls below a certain threshold (set by Admin), system triggers an alert for reordering.
+
+---
+
+## 💼 Business Model Story  
+- Rent a space in the city center for **Biryani Preparation**  
+- Follow **Proper SOP**  
+- Buy **Thelas** and hire **Staff on Salary**  
+- Send carts to **main areas of city**  
+- Biryani goes **weighed** before leaving facility  
+- Price = **₹200/kg** (Can be changed)  
+- At day's end, cart staff must **submit total revenue** matching their received weight  
+- **Stock Replenishment System:** If any ingredient goes below the required stock level, system triggers a purchase request.  
+
+---
+
+**PUT SAMPLE DATA OF 7 DAYS FOR TESTING**

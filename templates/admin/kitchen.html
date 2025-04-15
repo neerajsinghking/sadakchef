@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}Kitchen Monitoring - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-utensils me-2"></i> Kitchen Monitoring</h2>
+        <p class="text-muted">Monitor kitchen operations and refill requests</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Refill Requests -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-sync me-2"></i> Active Refill Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if refill_requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>Request Time</th>
+                                <th>Cart Staff</th>
+                                <th>Recipe</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Chef</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for refill, user, sop in refill_requests %}
+                            <tr class="{% if refill.status == 'requested' %}table-warning{% elif refill.status == 'accepted' %}table-info{% elif refill.status == 'prepared' %}table-success{% endif %}">
+                                <td>{{ refill.request_time.strftime('%H:%M, %d %b') }}</td>
+                                <td>{{ user.name }}</td>
+                                <td>{{ sop.name }}</td>
+                                <td>{{ refill.quantity }} kg</td>
+                                <td>
+                                    <span class="status-badge status-{{ refill.status }}">
+                                        {{ refill.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if refill.chef_id %}
+                                        {% set chef = namespace(name='') %}
+                                        {% for r, u, s in refill_requests %}
+                                            {% if r.chef_id == refill.chef_id %}
+                                                {% set chef.name = u.name %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {{ chef.name }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p>No refill requests at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Kitchen Production -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tasks me-2"></i> Kitchen Production</h5>
+            </div>
+            <div class="card-body">
+                {% if productions %}
+                <div class="table-responsive">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>Batch No</th>
+                                <th>Recipe</th>
+                                <th>Chef</th>
+                                <th>Quantity</th>
+                                <th>Started</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for production, user, sop in productions %}
+                            <tr>
+                                <td>{{ production.batch_no }}</td>
+                                <td>{{ sop.name }}</td>
+                                <td>{{ user.name }}</td>
+                                <td>{{ production.quantity }} kg</td>
+                                <td>{{ production.time_started.strftime('%H:%M, %d %b') }}</td>
+                                <td>
+                                    {% if production.time_completed %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">In Progress</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                    <p>No production data available.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kitchen Workflow -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i> Kitchen Workflow</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card mb-3 bg-warning bg-opacity-10">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-cart-plus fa-3x text-warning"></i>
+                                </div>
+                                <h5>1. Cart Staff Requests</h5>
+                                <p class="small">Cart staff submits refill request through their dashboard</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3 bg-info bg-opacity-10">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-check-circle fa-3x text-info"></i>
+                                </div>
+                                <h5>2. Chef Accepts</h5>
+                                <p class="small">Chef acknowledges and accepts the refill request</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3 bg-success bg-opacity-10">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-utensils fa-3x text-success"></i>
+                                </div>
+                                <h5>3. Chef Prepares</h5>
+                                <p class="small">Chef prepares the dish according to SOP</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3 bg-secondary bg-opacity-10">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-shopping-cart fa-3x text-secondary"></i>
+                                </div>
+                                <h5>4. Cart Staff Takes</h5>
+                                <p class="small">Cart staff collects the prepared food</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <h5 class="alert-heading">Workflow Benefits:</h5>
+                    <ul class="mb-0">
+                        <li>Real-time tracking of refill status</li>
+                        <li>Clear responsibility at each stage</li>
+                        <li>Automatic inventory updates based on SOP</li>
+                        <li>Production tracking with batch numbers</li>
+                        <li>Efficient communication between kitchen and carts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kitchen Performance Metrics -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i> Kitchen Performance Metrics</h5>
+            </div>
+            <div class="card-body">
+                {% if productions %}
+                    {% set total_production = namespace(value=0) %}
+                    {% set avg_preparation_time = namespace(total=0, count=0) %}
+                    {% set recipes = {} %}
+                    
+                    {% for production, user, sop in productions %}
+                        {% set total_production.value = total_production.value + production.quantity %}
+                        
+                        {% if production.time_completed %}
+                            {% set duration = (production.time_completed - production.time_started).total_seconds() / 60 %}
+                            {% set avg_preparation_time.total = avg_preparation_time.total + duration %}
+                            {% set avg_preparation_time.count = avg_preparation_time.count + 1 %}
+                        {% endif %}
+                        
+                        {% if sop.name in recipes %}
+                            {% set _ = recipes.update({sop.name: recipes[sop.name] + production.quantity}) %}
+                        {% else %}
+                            {% set _ = recipes.update({sop.name: production.quantity}) %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% set recipe_names = recipes.keys()|list %}
+                    {% set recipe_quantities = [] %}
+                    {% for name in recipe_names %}
+                        {% set _ = recipe_quantities.append(recipes[name]) %}
+                    {% endfor %}
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-4">
+                                <h2 class="display-4">{{ total_production.value|round(1) }}</h2>
+                                <p class="text-muted mb-0">Total kg Produced</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-4">
+                                <h2 class="display-4">
+                                    {% if avg_preparation_time.count > 0 %}
+                                    {{ (avg_preparation_time.total / avg_preparation_time.count)|round(0) }}
+                                    {% else %}
+                                    0
+                                    {% endif %}
+                                </h2>
+                                <p class="text-muted mb-0">Avg. Preparation Time (min)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-4">
+                                <h2 class="display-4">{{ productions|length }}</h2>
+                                <p class="text-muted mb-0">Total Batches</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recipe Distribution</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="recipeChart" height="250" 
+                                        data-recipes="{{ recipe_names|tojson }}" 
+                                        data-quantities="{{ recipe_quantities|tojson }}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Production Trends</h5>
+                            </div>
+                            <div class="card-body">
+                                {% set dates = [] %}
+                                {% set quantities = [] %}
+                                
+                                {% for production, user, sop in productions %}
+                                    {% if loop.index <= 7 %}  <!-- Show only last 7 productions -->
+                                        {% set _ = dates.append(production.time_started.strftime('%d %b')) %}
+                                        {% set _ = quantities.append(production.quantity) %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                <canvas id="productionChart" height="250" 
+                                        data-dates="{{ dates|tojson }}" 
+                                        data-quantities="{{ quantities|tojson }}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5>No Production Data Available</h5>
+                    <p>Metrics will be displayed once kitchen production begins.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

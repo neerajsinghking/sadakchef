@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}SOP Calculator - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-calculator me-2"></i> SOP Calculator</h2>
+        <p class="text-muted">Calculate ingredient quantities for different recipe quantities</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recipe Calculator</h5>
+            </div>
+            <div class="card-body">
+                <form id="sop-calculator">
+                    <div class="row">
+                        <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="sop-select" class="form-label">Select Recipe</label>
+                                <select class="form-select" id="sop-select" required>
+                                    <option value="">Choose a recipe...</option>
+                        {% for sop in sops %}
+                        <option value="{{ sop.id }}">{{ sop.name }} (Base: {{ sop.base_quantity }} kg)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                        </div>
+                        <div class="col-md-4">
+                <div class="mb-3">
+                                <label for="quantity-input" class="form-label">Quantity (kg)</label>
+                                <input type="number" class="form-control" id="quantity-input" step="0.1" min="0.1" required>
+                            </div>
+                </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-primary w-100" id="calculate-btn">
+                        <i class="fas fa-calculator me-2"></i> Calculate Ingredients
+                    </button>
+                </div>
+            </div>
+        </div>
+                </form>
+                <div id="calculation-result"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SOP Information -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Available Recipes</h5>
+            </div>
+            <div class="card-body">
+                                    <div class="table-responsive">
+                    <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                <th>Recipe Name</th>
+                                <th>Base Quantity</th>
+                                <th>Ingredients</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                            {% for sop in sops %}
+                            <tr>
+                                <td>{{ sop.name }}</td>
+                                <td>{{ sop.base_quantity }} kg</td>
+                                <td>
+                                    <ul class="list-unstyled mb-0">
+                                                {% for sop_ing, ing in sop_ingredients[sop.id] %}
+                                        <li>{{ ing.name }}: {{ sop_ing.quantity }} {{ ing.unit }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calculator = document.getElementById('sop-calculator');
+    const sopSelect = document.getElementById('sop-select');
+    const quantityInput = document.getElementById('quantity-input');
+    const calculateBtn = document.getElementById('calculate-btn');
+    const resultDiv = document.getElementById('calculation-result');
+    
+    calculateBtn.addEventListener('click', function() {
+        const sopId = sopSelect.value;
+        const quantity = parseFloat(quantityInput.value);
+        
+        // Input validation
+        if (!sopId) {
+            showError('Please select a recipe');
+            return;
+        }
+        
+        if (isNaN(quantity) || quantity <= 0) {
+            showError('Please enter a valid quantity (greater than 0)');
+            return;
+        }
+        
+        // Show loading state
+        resultDiv.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Calculating ingredients...</p></div>';
+        
+        // Make API call
+        fetch(`/api/calculate_sop/${sopId}/${quantity}`)
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid response from server');
+                }
+                
+                // Generate result HTML
+                let html = `
+                    <div class="alert alert-info mt-3">
+                        <h5 class="alert-heading">${data.sop_name}</h5>
+                        <p>Base quantity: ${data.original_quantity.toFixed(2)} kg</p>
+                        <p>Requested quantity: ${data.requested_quantity.toFixed(2)} kg</p>
+                        <p>Scale factor: ${data.scale_factor.toFixed(2)}</p>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Ingredient</th>
+                                    <th>Original Quantity</th>
+                                    <th>Needed Quantity</th>
+                                    <th>Unit</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                if (Array.isArray(data.ingredients)) {
+                    data.ingredients.forEach(ingredient => {
+                        html += `
+                            <tr>
+                                <td>${ingredient.name}</td>
+                                <td>${ingredient.original_quantity.toFixed(2)}</td>
+                                <td><strong>${ingredient.scaled_quantity.toFixed(2)}</strong></td>
+                                <td>${ingredient.unit}</td>
+                                <td>${ingredient.note || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                resultDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error calculating SOP:', error);
+                showError(error.message || 'An error occurred while calculating ingredients');
+        });
+    });
+    
+    function showError(message) {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger mt-3">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                ${message}
+            </div>
+        `;
+    }
+});
+</script>
+{% endblock %}

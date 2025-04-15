@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage SOPs - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-book-open me-2"></i> Manage SOPs (Standard Operating Procedures)</h2>
+        <p class="text-muted">Create and manage recipes with their ingredients</p>
+    </div>
+</div>
+
+<!-- Filter Toggle -->
+                    <div class="mb-3">
+    <a href="{{ url_for('admin_sop', show_inactive='1') if not show_inactive else url_for('admin_sop') }}" 
+       class="btn btn-outline-secondary">
+        {% if show_inactive %}
+            <i class="fas fa-eye-slash me-1"></i> Hide Discontinued Recipes
+        {% else %}
+            <i class="fas fa-eye me-1"></i> Show Discontinued Recipes
+                        {% endif %}
+    </a>
+                    </div>
+                    
+<!-- Recipe List -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Available Recipes</h5>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSopModal">
+                    <i class="fas fa-plus me-1"></i> Add New Recipe
+                </button>
+            </div>
+            <div class="card-body">
+                                <div class="table-responsive">
+                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                <th>Recipe Name</th>
+                                <th>Base Quantity</th>
+                                <th>Price/kg</th>
+                                <th>Status</th>
+                                <th>Ingredients</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                            {% for sop in sops %}
+                            <tr>
+                                <td>{{ sop.name }}</td>
+                                <td>{{ sop.base_quantity }} kg</td>
+                                <td>₹{{ sop.selling_price }}</td>
+                                <td>
+                                    {% if sop.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Discontinued</span>
+                                        <br>
+                                        <small class="text-muted">on {{ sop.discontinued_at.strftime('%d-%m-%Y') }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if sop.id in sop_ingredients %}
+                                        <ul class="list-unstyled mb-0">
+                                            {% for sop_ing, ing in sop_ingredients[sop.id] %}
+                                            <li>{{ ing.name }}: {{ sop_ing.quantity }} {{ ing.unit }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <span class="text-muted">No ingredients added</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#addIngredientModal"
+                                                data-sop-id="{{ sop.id }}"
+                                                data-sop-name="{{ sop.name }}">
+                                            <i class="fas fa-plus me-1"></i> Add Ingredient
+                                        </button>
+                                        
+                                        <form method="POST" action="{{ url_for('toggle_sop_status', sop_id=sop.id) }}" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm {% if sop.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                                                    onclick="return confirm('Are you sure you want to {% if sop.is_active %}discontinue{% else %}reactivate{% endif %} this recipe?')">
+                                                {% if sop.is_active %}
+                                                    <i class="fas fa-ban me-1"></i> Discontinue
+                                                {% else %}
+                                                    <i class="fas fa-check me-1"></i> Reactivate
+                                                {% endif %}
+                                                        </button>
+                                                    </form>
+                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+<!-- Add SOP Modal -->
+<div class="modal fade" id="addSopModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Recipe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {{ sop_form.name.label(class="form-label") }}
+                        {{ sop_form.name(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ sop_form.base_quantity.label(class="form-label") }}
+                        {{ sop_form.base_quantity(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ sop_form.selling_price.label(class="form-label") }}
+                        {{ sop_form.selling_price(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ sop_form.description.label(class="form-label") }}
+                        {{ sop_form.description(class="form-control") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Recipe</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Ingredient Modal -->
+<div class="modal fade" id="addIngredientModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="sop_id" id="modalSopId">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Ingredient to <span id="modalSopName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {{ ingredient_form.ingredient_id.label(class="form-label") }}
+                        {{ ingredient_form.ingredient_id(class="form-control") }}
+                            </div>
+                    <div class="mb-3">
+                        {{ ingredient_form.quantity.label(class="form-label") }}
+                        {{ ingredient_form.quantity(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ ingredient_form.note.label(class="form-label") }}
+                        {{ ingredient_form.note(class="form-control") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Ingredient</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle Add Ingredient modal
+    const addIngredientModal = document.getElementById('addIngredientModal')
+    if (addIngredientModal) {
+        addIngredientModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget
+            const sopId = button.getAttribute('data-sop-id')
+            const sopName = button.getAttribute('data-sop-name')
+            
+            document.getElementById('modalSopId').value = sopId
+            document.getElementById('modalSopName').textContent = sopName
+        })
+    }
+});
+</script>
+{% endblock %}

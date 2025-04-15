@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}Chef Dashboard - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-tachometer-alt me-2"></i> Chef Dashboard</h2>
+        <p class="text-muted">Manage kitchen operations and view refill requests</p>
+    </div>
+</div>
+
+<!-- Status Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-warning">
+                    <i class="fas fa-sync"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ active_refills|length }}</p>
+                    <p class="stats-text">Active Refill Requests</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-success">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ recent_productions|length }}</p>
+                    <p class="stats-text">Recent Productions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-info">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ attendance_submitted and 'Submitted' or 'Pending' }}</p>
+                    <p class="stats-text">Today's Attendance</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Refill Requests -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-sync me-2"></i> Active Refill Requests</h5>
+                <a href="{{ url_for('chef_refill') }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-eye me-1"></i> View All
+                </a>
+            </div>
+            <div class="card-body">
+                {% if active_refills %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Cart Staff</th>
+                                <th>Recipe</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for refill, user, sop in active_refills %}
+                            <tr>
+                                <td>{{ user.name }}</td>
+                                <td>{{ sop.name }}</td>
+                                <td>{{ refill.quantity }} kg</td>
+                                <td>
+                                    <span class="status-badge status-{{ refill.status }}">
+                                        {{ refill.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if refill.status == 'requested' %}
+                                    <form method="POST" action="{{ url_for('update_refill') }}" class="d-inline refill-status-form">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                        <input type="hidden" name="action" value="accept">
+                                        <button type="submit" class="btn btn-sm btn-info">
+                                            <i class="fas fa-check me-1"></i> Accept
+                                        </button>
+                                    </form>
+                                    {% elif refill.status == 'accepted' and refill.chef_id == current_user.id %}
+                                    <form method="POST" action="{{ url_for('update_refill') }}" class="d-inline refill-status-form">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                        <input type="hidden" name="action" value="prepare">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-utensils me-1"></i> Prepared
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p>No active refill requests at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Productions -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i> Your Recent Productions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_productions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Batch No</th>
+                                <th>Recipe</th>
+                                <th>Quantity</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for production, sop in recent_productions %}
+                            <tr>
+                                <td>{{ production.batch_no }}</td>
+                                <td>{{ sop.name }}</td>
+                                <td>{{ production.quantity }} kg</td>
+                                <td>{{ production.time_started.strftime('%H:%M, %d %b') }}</td>
+                                <td>
+                                    {% if production.time_completed %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">In Progress</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                    <p>No production records found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions & Reminders -->
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('chef_refill') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-sync fa-2x text-info mb-3"></i>
+                                <h5>Manage Refills</h5>
+                                <p class="small text-muted mb-0">Accept and prepare refill requests</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('chef_sop') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-book-open fa-2x text-primary mb-3"></i>
+                                <h5>SOP Calculator</h5>
+                                <p class="small text-muted mb-0">Calculate ingredient quantities per recipe</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('chef_inventory') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-warehouse fa-2x text-success mb-3"></i>
+                                <h5>Check Inventory</h5>
+                                <p class="small text-muted mb-0">View current ingredient stock levels</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('chef_attendance') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-clipboard-check fa-2x text-warning mb-3"></i>
+                                <h5>Submit Attendance</h5>
+                                <p class="small text-muted mb-0">Mark your daily attendance</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Workflow & Reminders -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i> Chef Workflow</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge rounded-pill bg-primary">1</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Accept Refill Requests</h6>
+                            <p class="small mb-0">Check incoming requests and accept them</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge rounded-pill bg-primary">2</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Use SOP Calculator</h6>
+                            <p class="small mb-0">Calculate exact ingredients needed for the quantity</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge rounded-pill bg-primary">3</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Prepare the Food</h6>
+                            <p class="small mb-0">Follow SOP to prepare the requested item</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge rounded-pill bg-primary">4</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Mark as Prepared</h6>
+                            <p class="small mb-0">Click "Prepared" button when food is ready</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge rounded-pill bg-primary">5</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Submit Attendance</h6>
+                            <p class="small mb-0">Don't forget to submit your daily attendance</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if not attendance_submitted %}
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Reminder:</strong> Please submit your attendance for today.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SOP Calculator -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calculator me-2"></i> SOP Calculator</h5>
+            </div>
+            <div class="card-body">
+                <form id="sop-calculator">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="sop-select" class="form-label">Select Recipe</label>
+                                <select class="form-select" id="sop-select" required>
+                                    <option value="">Choose a recipe...</option>
+                                    {% for sop in sops %}
+                                    <option value="{{ sop.id }}">{{ sop.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="quantity-input" class="form-label">Quantity (kg)</label>
+                                <input type="number" class="form-control" id="quantity-input" step="0.1" min="0.1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-primary w-100" id="calculate-btn">
+                                    <i class="fas fa-calculator me-2"></i> Calculate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div id="calculation-result"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

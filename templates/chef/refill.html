@@ -1,0 +1,476 @@
+{% extends 'base.html' %}
+
+{% block title %}Refill Requests - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-sync me-2"></i> Refill Requests</h2>
+        <p class="text-muted">Manage cart refill requests and update their status</p>
+    </div>
+</div>
+
+<!-- Refill Requests -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i> All Refill Requests</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-3" id="refillTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab" aria-controls="active" aria-selected="true">
+                            Active Requests
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="false">
+                            All Requests
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="your-tab" data-bs-toggle="tab" data-bs-target="#your" type="button" role="tab" aria-controls="your" aria-selected="false">
+                            Your Accepted Requests
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="refillTabsContent">
+                    <!-- Active Requests Tab -->
+                    <div class="tab-pane fade show active" id="active" role="tabpanel" aria-labelledby="active-tab">
+                        {% set active_requests = [] %}
+                        {% for refill, user, sop in refill_requests %}
+                            {% if refill.status in ['requested', 'accepted'] %}
+                                {% set _ = active_requests.append((refill, user, sop)) %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if active_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request Time</th>
+                                        <th>Cart Staff</th>
+                                        <th>Recipe</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for refill, user, sop in active_requests %}
+                                    <tr>
+                                        <td>{{ refill.request_time.strftime('%H:%M, %d %b') }}</td>
+                                        <td>{{ user.name }} ({{ user.staff_id }})</td>
+                                        <td>{{ sop.name }}</td>
+                                        <td>{{ refill.quantity }} kg</td>
+                                        <td>
+                                            <span class="status-badge status-{{ refill.status }}">
+                                                {{ refill.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if refill.status == 'requested' %}
+                                            <form method="POST" action="{{ url_for('update_refill') }}" class="d-inline refill-status-form">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                                <input type="hidden" name="action" value="accept">
+                                                <button type="submit" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-check me-1"></i> Accept
+                                                </button>
+                                            </form>
+                                            {% elif refill.status == 'accepted' and refill.chef_id == current_user.id %}
+                                            <form method="POST" action="{{ url_for('update_refill') }}" class="d-inline refill-status-form">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                                <input type="hidden" name="action" value="prepare">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-utensils me-1"></i> Prepared
+                                                </button>
+                                            </form>
+                                            {% elif refill.status == 'accepted' %}
+                                            <span class="badge bg-secondary">Accepted by another chef</span>
+                                            {% endif %}
+                                            
+                                            <button type="button" class="btn btn-sm btn-primary view-sop" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#sopModal" 
+                                                    data-sop-id="{{ sop.id }}" 
+                                                    data-quantity="{{ refill.quantity }}">
+                                                <i class="fas fa-book-open me-1"></i> View SOP
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <p>No active refill requests at the moment.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- All Requests Tab -->
+                    <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+                        {% if refill_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request Time</th>
+                                        <th>Cart Staff</th>
+                                        <th>Recipe</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th>Chef</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for refill, user, sop in refill_requests %}
+                                    <tr>
+                                        <td>{{ refill.request_time.strftime('%H:%M, %d %b') }}</td>
+                                        <td>{{ user.name }} ({{ user.staff_id }})</td>
+                                        <td>{{ sop.name }}</td>
+                                        <td>{{ refill.quantity }} kg</td>
+                                        <td>
+                                            <span class="status-badge status-{{ refill.status }}">
+                                                {{ refill.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if refill.chef_id %}
+                                                {% set chef = namespace(name='') %}
+                                                {% for r, u, s in refill_requests %}
+                                                    {% if r.chef_id and u.id == r.chef_id %}
+                                                        {% set chef.name = u.name %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {{ chef.name }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if refill.status == 'requested' %}
+                                            <form method="POST" action="{{ url_for('update_refill') }}" class="d-inline refill-status-form">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                                <input type="hidden" name="action" value="accept">
+                                                <button type="submit" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-check me-1"></i> Accept
+                                                </button>
+                                            </form>
+                                            {% elif refill.status == 'accepted' and refill.chef_id == current_user.id %}
+                                            <form method="POST" action="{{ url_for('update_refill') }}" class="d-inline refill-status-form">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                                <input type="hidden" name="action" value="prepare">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-utensils me-1"></i> Prepared
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                            
+                                            <button type="button" class="btn btn-sm btn-primary view-sop" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#sopModal" 
+                                                    data-sop-id="{{ sop.id }}" 
+                                                    data-quantity="{{ refill.quantity }}">
+                                                <i class="fas fa-book-open me-1"></i> View SOP
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-sync fa-3x text-muted mb-3"></i>
+                            <p>No refill requests found.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Your Accepted Requests Tab -->
+                    <div class="tab-pane fade" id="your" role="tabpanel" aria-labelledby="your-tab">
+                        {% set your_requests = [] %}
+                        {% for refill, user, sop in refill_requests %}
+                            {% if refill.chef_id == current_user.id %}
+                                {% set _ = your_requests.append((refill, user, sop)) %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if your_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request Time</th>
+                                        <th>Cart Staff</th>
+                                        <th>Recipe</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for refill, user, sop in your_requests %}
+                                    <tr>
+                                        <td>{{ refill.request_time.strftime('%H:%M, %d %b') }}</td>
+                                        <td>{{ user.name }} ({{ user.staff_id }})</td>
+                                        <td>{{ sop.name }}</td>
+                                        <td>{{ refill.quantity }} kg</td>
+                                        <td>
+                                            <span class="status-badge status-{{ refill.status }}">
+                                                {{ refill.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if refill.status == 'accepted' %}
+                                            <form method="POST" action="{{ url_for('update_refill') }}" class="d-inline refill-status-form">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                                <input type="hidden" name="action" value="prepare">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-utensils me-1"></i> Prepared
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                            
+                                            <button type="button" class="btn btn-sm btn-primary view-sop" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#sopModal" 
+                                                    data-sop-id="{{ sop.id }}" 
+                                                    data-quantity="{{ refill.quantity }}">
+                                                <i class="fas fa-book-open me-1"></i> View SOP
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                            <p>You haven't accepted any refill requests yet.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refill Process Card -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Refill Process</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card mb-3 bg-warning bg-opacity-10">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-cart-plus fa-3x text-warning"></i>
+                                </div>
+                                <h5>1. Requested</h5>
+                                <p class="small">Cart staff submits refill request</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3 bg-info bg-opacity-10">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-check-circle fa-3x text-info"></i>
+                                </div>
+                                <h5>2. Accepted</h5>
+                                <p class="small">Chef accepts the request for preparation</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3 bg-success bg-opacity-10">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-utensils fa-3x text-success"></i>
+                                </div>
+                                <h5>3. Prepared</h5>
+                                <p class="small">Chef prepares and marks as ready</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3 bg-secondary bg-opacity-10">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-shopping-cart fa-3x text-secondary"></i>
+                                </div>
+                                <h5>4. Taken</h5>
+                                <p class="small">Cart staff collects the food</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <p class="mb-0"><strong>Note:</strong> When you mark a request as "Prepared", the system automatically:</p>
+                    <ul class="mb-0">
+                        <li>Deducts ingredients from inventory based on SOP quantities</li>
+                        <li>Records production details with your name and batch number</li>
+                        <li>Updates the request status for cart staff to see</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SOP Modal -->
+<div class="modal fade" id="sopModal" tabindex="-1" aria-labelledby="sopModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sopModalLabel">Recipe SOP Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-5" id="sop-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading SOP details...</p>
+                </div>
+                
+                <div id="sop-content" style="display: none;">
+                    <h5 id="sop-name" class="mb-3"></h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <p><strong>Base Quantity:</strong> <span id="sop-base-quantity"></span> kg</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Requested Quantity:</strong> <span id="sop-requested-quantity"></span> kg</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Scale Factor:</strong> <span id="sop-scale-factor"></span>x</p>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-2">Ingredients Required:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Ingredient</th>
+                                    <th>Original Quantity</th>
+                                    <th>Needed Quantity</th>
+                                    <th>Unit</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sop-ingredients">
+                                <!-- Ingredients will be added here via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="sop-description" class="alert alert-light mt-3"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle the View SOP button clicks
+    const viewSopButtons = document.querySelectorAll('.view-sop');
+    const sopLoading = document.getElementById('sop-loading');
+    const sopContent = document.getElementById('sop-content');
+    
+    viewSopButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const sopId = this.getAttribute('data-sop-id');
+            const requestedQuantity = this.getAttribute('data-quantity');
+            
+            // Show loading, hide content
+            sopLoading.style.display = 'block';
+            sopContent.style.display = 'none';
+            
+            // Fetch SOP details
+            fetch(`/api/calculate_sop/${sopId}/${requestedQuantity}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading, show content
+                    sopLoading.style.display = 'none';
+                    sopContent.style.display = 'block';
+                    
+                    // Populate the modal with data
+                    document.getElementById('sop-name').textContent = data.sop_name;
+                    document.getElementById('sop-base-quantity').textContent = data.original_quantity;
+                    document.getElementById('sop-requested-quantity').textContent = data.requested_quantity;
+                    document.getElementById('sop-scale-factor').textContent = data.scale_factor.toFixed(2);
+                    
+                    // Populate ingredients table
+                    const ingredientsTableBody = document.getElementById('sop-ingredients');
+                    ingredientsTableBody.innerHTML = '';
+                    
+                    data.ingredients.forEach(ingredient => {
+                        const row = document.createElement('tr');
+                        
+                        row.innerHTML = `
+                            <td>${ingredient.name}</td>
+                            <td>${ingredient.original_quantity}</td>
+                            <td><strong>${ingredient.scaled_quantity.toFixed(2)}</strong></td>
+                            <td>${ingredient.unit}</td>
+                            <td>${ingredient.note || '-'}</td>
+                        `;
+                        
+                        ingredientsTableBody.appendChild(row);
+                    });
+                    
+                    // Get additional SOP details for description
+                    fetch(`/api/get_sop_details/${sopId}`)
+                        .then(response => response.json())
+                        .then(sopData => {
+                            if (sopData.description) {
+                                document.getElementById('sop-description').innerHTML = 
+                                    `<strong>Preparation Notes:</strong> ${sopData.description}`;
+                            } else {
+                                document.getElementById('sop-description').innerHTML = 
+                                    `<strong>Preparation Notes:</strong> No additional notes provided.`;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching SOP details:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error calculating SOP:', error);
+                    sopLoading.style.display = 'none';
+                    sopContent.innerHTML = '<div class="alert alert-danger">Error loading SOP details. Please try again.</div>';
+                    sopContent.style.display = 'block';
+                });
+        });
+    });
+});
+</script>
+{% endblock %}

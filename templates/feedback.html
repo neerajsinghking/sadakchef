@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Feedback{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Customer Feedback</h3>
+                </div>
+                <div class="card-body">
+                    <p class="lead mb-4">We value your feedback! Please let us know about your experience with our service.</p>
+                    
+                    <form method="POST" action="{{ url_for('customer_feedback') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.thela_id.label(class="form-label") }}
+                            {{ form.thela_id(class="form-control", placeholder="e.g. CART001") }}
+                            {% if form.thela_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.thela_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">You can find the Thela ID on the cart or ask the cart staff.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.feedback_type.label(class="form-label") }}
+                            {{ form.feedback_type(class="form-select") }}
+                            {% if form.feedback_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.feedback_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.comments.label(class="form-label") }}
+                            {{ form.comments(class="form-control", rows=5, placeholder="Your feedback here...") }}
+                            {% if form.comments.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.comments.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">Thank you for helping us improve!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

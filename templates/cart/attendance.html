@@ -1,0 +1,154 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Attendance - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-clipboard-check me-2"></i> Attendance</h2>
+        <p class="text-muted">Submit and view your attendance records</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Submit Attendance -->
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i> Today's Attendance</h5>
+            </div>
+            <div class="card-body">
+                {% if attendance_submitted %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                    <h5>Attendance Submitted</h5>
+                    <p>You have already submitted your attendance for today.</p>
+                    
+                    {% for record in attendance_records %}
+                        {% if record.date == today %}
+                        <div class="alert alert-info mt-3">
+                            <p class="mb-0"><strong>Status:</strong> 
+                                {% if record.present %}
+                                <span class="badge bg-success">Present</span>
+                                {% else %}
+                                <span class="badge bg-danger">Absent</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-0"><strong>Approval Status:</strong> 
+                                {% if record.approved %}
+                                <span class="badge bg-success">Approved</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Pending Approval</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <form method="POST" action="{{ url_for('cart_attendance') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        <h6>Date: <span class="badge bg-primary">{{ today.strftime('%d %b, %Y') }}</span></h6>
+                        <h6>Name: <span class="badge bg-secondary">{{ current_user.name }}</span></h6>
+                        <h6>Cart ID: <span class="badge bg-secondary">{{ current_user.staff_id }}</span></h6>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            {{ form.present(class="form-check-input", checked=true) }}
+                            <label class="form-check-label" for="present">Mark as Present</label>
+                        </div>
+                        <div class="form-text">Uncheck only if you are reporting absence.</div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <p class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> <strong>Important:</strong></p>
+                        <ul class="mb-0 mt-2">
+                            <li>Attendance must be submitted before the end of your shift</li>
+                            <li>Not submitting attendance will result in being marked absent</li>
+                            <li>Admin approval is required for attendance to be finalized</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Attendance History -->
+    <div class="col-md-7">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i> Attendance History</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6>Past Week Attendance</h6>
+                    <div>
+                        {% set present_count = 0 %}
+                        {% for record in attendance_records %}
+                            {% if record.present %}
+                                {% set present_count = present_count + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <span class="badge bg-success">Present: {{ present_count }}</span>
+                        <span class="badge bg-danger">Absent: {{ attendance_records|length - present_count }}</span>
+                    </div>
+                </div>
+                
+                {% if attendance_records %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Approval</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in attendance_records %}
+                            <tr>
+                                <td>{{ record.date.strftime('%d %b, %Y') }}</td>
+                                <td>
+                                    {% if record.present %}
+                                    <span class="badge bg-success">Present</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Absent</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <i class="fas fa-check-circle text-success"></i> Submitted
+                                </td>
+                                <td>
+                                    {% if record.approved %}
+                                    <span class="badge bg-success">Approved</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
+                    <p>No attendance records found for the past week.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

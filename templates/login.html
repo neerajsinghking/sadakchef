@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="login-container bg-dark">
+            <div class="login-header">
+                <div class="mb-4 text-center">
+                    <i class="fas fa-utensils fa-3x text-warning mb-3"></i>
+                    <h2 class="mb-0">Biryani Management</h2>
+                    <p class="text-muted">Login to access your dashboard</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('login') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">{{ form.username.label }}</label>
+                            {{ form.username(class="form-control", placeholder="Enter your username") }}
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">{{ form.password.label }}</label>
+                            {{ form.password(class="form-control", placeholder="Enter your password") }}
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.password.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card bg-primary bg-opacity-25 text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-user-tie fa-2x mb-2"></i>
+                                <h5>Admin Panel</h5>
+                                <p class="small">Manage operations</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info bg-opacity-25 text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-user-chef fa-2x mb-2"></i>
+                                <h5>Chef Panel</h5>
+                                <p class="small">Kitchen operations</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success bg-opacity-25 text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                                <h5>Cart Panel</h5>
+                                <p class="small">Sales management</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Demo Credentials</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Admin:</strong> admin / admin123</li>
+                                <li><strong>Chef:</strong> chef1 / password (if created)</li>
+                                <li><strong>Cart:</strong> cart1 / password (if created)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>System Features</h5>
+                            <ul class="small">
+                                <li>Multi-role management system</li>
+                                <li>Inventory &amp; SOP tracking</li>
+                                <li>Real-time kitchen monitoring</li>
+                                <li>Sales and attendance tracking</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 d-none d-md-block">
+        <div class="card mb-4">
+            <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352" class="card-img-top" alt="Biryani Image">
+            <div class="card-body text-center">
+                <h3 class="card-title">Delicious Biryani</h3>
+                <p class="card-text">Manage your biryani business with our comprehensive management system.</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4" class="card-img-top" alt="Restaurant Management">
+                    <div class="card-body">
+                        <h5 class="card-title">Efficient Management</h5>
+                        <p class="card-text small">Track everything from inventory to sales in real-time.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601" class="card-img-top" alt="Food Cart">
+                    <div class="card-body">
+                        <h5 class="card-title">Cart Operations</h5>
+                        <p class="card-text small">Easily manage multiple food carts across different locations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

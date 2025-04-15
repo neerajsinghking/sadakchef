@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-tachometer-alt me-2"></i> Admin Dashboard</h2>
+        <p class="text-muted">Overview of your biryani business operations</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-primary">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ staff_count }}</p>
+                    <p class="stats-text">Total Staff</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-success">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ chef_count }}</p>
+                    <p class="stats-text">Chefs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-info">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ cart_count }}</p>
+                    <p class="stats-text">Cart Staff</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-warning">
+                    <i class="fas fa-rupee-sign"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">₹{{ total_revenue_today|round(2) }}</p>
+                    <p class="stats-text">Today's Revenue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sales Chart -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i> Weekly Sales</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" class="dashboard-chart" data-dates="{{ dates|tojson }}" data-revenues="{{ revenues|tojson }}"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body quick-actions">
+                <a href="{{ url_for('admin_staff') }}" class="btn btn-primary w-100 mb-2">
+                    <i class="fas fa-user-plus me-2"></i> Add New Staff
+                </a>
+                <a href="{{ url_for('admin_sop') }}" class="btn btn-success w-100 mb-2">
+                    <i class="fas fa-book-open me-2"></i> Manage SOPs
+                </a>
+                <a href="{{ url_for('admin_ingredients') }}" class="btn btn-info w-100 mb-2">
+                    <i class="fas fa-pepper-hot me-2"></i> Add Ingredients
+                </a>
+                <a href="{{ url_for('admin_purchases') }}" class="btn btn-warning w-100 mb-2">
+                    <i class="fas fa-shopping-cart me-2"></i> Record Purchase
+                </a>
+                <a href="{{ url_for('admin_export') }}" class="btn btn-secondary w-100">
+                    <i class="fas fa-file-export me-2"></i> Export Data
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Refill Requests -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-sync me-2"></i> Active Refill Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if active_refills %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Cart</th>
+                                <th>Recipe</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for refill in active_refills %}
+                            <tr>
+                                <td>{{ refill.staff.name }}</td>
+                                <td>{{ refill.recipe.name }}</td>
+                                <td>{{ refill.quantity }} kg</td>
+                                <td>
+                                    <span class="status-badge status-{{ refill.status }}">
+                                        {{ refill.status }}
+                                    </span>
+                                </td>
+                                <td>{{ refill.request_time.strftime('%H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p>No active refill requests at the moment.</p>
+                </div>
+                {% endif %}
+                <div class="text-end mt-2">
+                    <a href="{{ url_for('admin_kitchen') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Inventory -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Low Stock Items</h5>
+            </div>
+            <div class="card-body">
+                {% if inventory_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ingredient</th>
+                                <th>Current Stock</th>
+                                <th>Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inventory_items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td class="{% if item.closing_stock < 5 %}low-stock{% endif %}">
+                                    {{ item.closing_stock }}
+                                </td>
+                                <td>{{ item.unit }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <p>No inventory data available.</p>
+                </div>
+                {% endif %}
+                <div class="text-end mt-2">
+                    <a href="{{ url_for('admin_inventory') }}" class="btn btn-sm btn-outline-primary">View All Inventory</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Feedback -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-comment-alt me-2"></i> Recent Feedback</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_feedbacks %}
+                <div class="row">
+                    {% for feedback in recent_feedbacks %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card feedback-card feedback-{{ feedback.feedback_type }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <h6 class="mb-0">Cart: {{ feedback.thela_id }}</h6>
+                                    <span class="badge bg-{{ 'danger' if feedback.feedback_type == 'complaint' else 'warning' if feedback.feedback_type == 'suggestion' else 'success' }}">
+                                        {{ feedback.feedback_type|capitalize }}
+                                    </span>
+                                </div>
+                                <p class="card-text text-truncate-2">{{ feedback.comments }}</p>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">{{ feedback.date.strftime('%d %b, %Y') }}</small>
+                                    {% if not feedback.action_taken %}
+                                    <button class="btn btn-sm btn-outline-primary feedback-action-btn" 
+                                            data-feedback-id="{{ feedback.id }}" 
+                                            data-feedback-details="{{ feedback.comments }}">
+                                        Take Action
+                                    </button>
+                                    {% else %}
+                                    <span class="badge bg-success">Action Taken</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                    <p>No feedback received yet.</p>
+                </div>
+                {% endif %}
+                <div class="text-end mt-2">
+                    <a href="{{ url_for('admin_feedback') }}" class="btn btn-sm btn-outline-primary">View All Feedback</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Business Summary -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Business Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <div class="summary-icon mb-3">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <h5>Biryani Preparation</h5>
+                        <p class="text-muted small">Following proper SOPs at central kitchen</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="summary-icon mb-3">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <h5>Thelas & Staff</h5>
+                        <p class="text-muted small">Deployed across key city locations</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="summary-icon mb-3">
+                            <i class="fas fa-rupee-sign"></i>
+                        </div>
+                        <h5>Sales @ ₹200/kg</h5>
+                        <p class="text-muted small">Current default pricing model</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="summary-icon mb-3">
+                            <i class="fas fa-warehouse"></i>
+                        </div>
+                        <h5>Stock Management</h5>
+                        <p class="text-muted small">Auto-replenishment system active</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Action Modal -->
+<div class="modal fade" id="feedbackActionModal" tabindex="-1" aria-labelledby="feedbackActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="feedbackActionModalLabel">Take Action on Feedback</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="feedback-action-form" action="{{ url_for('update_feedback', feedback_id=0) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="feedback_id" id="feedback_id" value="">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Feedback Details:</label>
+                        <p id="feedback-details" class="border p-3 rounded bg-light"></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="action_taken" class="form-label">Action Taken:</label>
+                        <textarea name="action_taken" id="action_taken" class="form-control" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Save Action</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fix the form action when feedback is selected
+        const actionButtons = document.querySelectorAll('.feedback-action-btn');
+        const actionForm = document.getElementById('feedback-action-form');
+        const feedbackIdInput = document.getElementById('feedback_id');
+        
+        actionButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const feedbackId = this.getAttribute('data-feedback-id');
+                feedbackIdInput.value = feedbackId;
+                actionForm.action = "{{ url_for('update_feedback', feedback_id=0) }}".replace('0', feedbackId);
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block title %}Ingredients Management - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-pepper-hot me-2"></i> Ingredients Management</h2>
+        <p class="text-muted">Add and manage ingredients for your recipes</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Add New Ingredient Form -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Add New Ingredient</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_ingredients') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">{{ form.name.label }}</label>
+                        {{ form.name(class="form-control") }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">{{ form.category.label }}</label>
+                        {{ form.category(class="form-control") }}
+                        <div class="form-text">Examples: Spices, Vegetables, Meat, Dairy, Grains, Etc.</div>
+                        {% if form.category.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.category.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="unit" class="form-label">{{ form.unit.label }}</label>
+                        {{ form.unit(class="form-control") }}
+                        <div class="form-text">Examples: kg, g, liters, ml, pieces, etc.</div>
+                        {% if form.unit.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.unit.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Ingredient Categories Guide -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tags me-2"></i> Suggested Categories</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Spices
+                        <span class="badge bg-primary rounded-pill">Cumin, Turmeric, Masala</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Vegetables
+                        <span class="badge bg-success rounded-pill">Onion, Tomato, Carrot</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Meat
+                        <span class="badge bg-danger rounded-pill">Chicken, Mutton, Fish</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Dairy
+                        <span class="badge bg-info rounded-pill">Curd, Ghee, Milk</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Grains
+                        <span class="badge bg-warning text-dark rounded-pill">Rice, Wheat, Millet</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Herbs
+                        <span class="badge bg-success rounded-pill">Coriander, Mint, Curry Leaves</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Oils
+                        <span class="badge bg-secondary rounded-pill">Vegetable Oil, Ghee</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ingredients List -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i> Ingredients List</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="filterToggle">
+                    <i class="fas fa-filter me-1"></i> Filter
+                </button>
+            </div>
+            <div class="card-body">
+                {% if ingredients %}
+                <!-- Optional Filter Bar -->
+                <div id="filterBar" class="mb-3 bg-light p-3 rounded" style="display: none;">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <input type="text" id="nameFilter" class="form-control form-control-sm" placeholder="Filter by name...">
+                        </div>
+                        <div class="col-md-4">
+                            <select id="categoryFilter" class="form-select form-select-sm">
+                                <option value="">All Categories</option>
+                                {% set categories = [] %}
+                                {% for ingredient in ingredients %}
+                                    {% if ingredient.category not in categories %}
+                                        {% set _ = categories.append(ingredient.category) %}
+                                        <option value="{{ ingredient.category }}">{{ ingredient.category }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" id="clearFilters" class="btn btn-sm btn-outline-secondary w-100">
+                                <i class="fas fa-times me-1"></i> Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Unit</th>
+                                <th>Added On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ingredient in ingredients %}
+                            <tr>
+                                <td>{{ ingredient.name }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if ingredient.category == 'Spices' %}bg-primary
+                                        {% elif ingredient.category == 'Vegetables' %}bg-success
+                                        {% elif ingredient.category == 'Meat' %}bg-danger
+                                        {% elif ingredient.category == 'Dairy' %}bg-info
+                                        {% elif ingredient.category == 'Grains' %}bg-warning text-dark
+                                        {% elif ingredient.category == 'Herbs' %}bg-success
+                                        {% elif ingredient.category == 'Oils' %}bg-secondary
+                                        {% else %}bg-dark
+                                        {% endif %}">
+                                        {{ ingredient.category }}
+                                    </span>
+                                </td>
+                                <td>{{ ingredient.unit }}</td>
+                                <td>{{ ingredient.created_at.strftime('%d %b, %Y') }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('delete_ingredient', ingredient_id=ingredient.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this ingredient? It may affect SOPs that use it.');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-pepper-hot fa-3x text-muted mb-3"></i>
+                    <h5>No Ingredients Added Yet</h5>
+                    <p>Start by adding some ingredients using the form on the left.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ingredient Usage Info -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Ingredient Usage Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-lightbulb me-2"></i> Important Note:</h5>
+                    <p>When adding ingredients, keep in mind:</p>
+                    <ul>
+                        <li>Each ingredient needs a specific unit (kg, g, liters, etc.) for inventory tracking</li>
+                        <li>Be consistent with units across similar ingredients</li>
+                        <li>Ingredients cannot be deleted if they are used in active SOPs</li>
+                        <li>The system will automatically track inventory based on SOPs and purchases</li>
+                    </ul>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Units Guide</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Unit Type</th>
+                                        <th>Examples</th>
+                                        <th>Best For</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Weight - Metric</td>
+                                        <td>kg, g, mg</td>
+                                        <td>Rice, meat, vegetables</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Volume - Metric</td>
+                                        <td>liter, ml</td>
+                                        <td>Oil, milk, water</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Count</td>
+                                        <td>pieces, pcs, count</td>
+                                        <td>Eggs, lemons, whole items</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Special</td>
+                                        <td>bunch, packet</td>
+                                        <td>Herbs, pre-packaged ingredients</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Inventory Management Tips</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Track high-value ingredients most carefully
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Set up alerts for low stock on critical items
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Review inventory regularly for discrepancies
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Ensure proper storage conditions for all ingredients
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Organize ingredients by category in storage area
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter toggle functionality
+        const filterToggle = document.getElementById('filterToggle');
+        const filterBar = document.getElementById('filterBar');
+        const nameFilter = document.getElementById('nameFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const clearFilters = document.getElementById('clearFilters');
+        
+        if (filterToggle && filterBar) {
+            filterToggle.addEventListener('click', function() {
+                if (filterBar.style.display === 'none') {
+                    filterBar.style.display = 'block';
+                } else {
+                    filterBar.style.display = 'none';
+                }
+            });
+        }
+        
+        // DataTable - with custom filtering
+        if (nameFilter && categoryFilter && clearFilters) {
+            // Initialize DataTable
+            const table = $('.data-table').DataTable();
+            
+            // Apply filters
+            nameFilter.addEventListener('keyup', function() {
+                table.search(this.value).draw();
+            });
+            
+            categoryFilter.addEventListener('change', function() {
+                table.column(1).search(this.value).draw();
+            });
+            
+            // Clear filters
+            clearFilters.addEventListener('click', function() {
+                nameFilter.value = '';
+                categoryFilter.value = '';
+                table.search('').columns().search('').draw();
+            });
+        }
+    });
+</script>
+{% endblock %}

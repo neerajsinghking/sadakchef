@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+
+{% block title %}Supplier Purchases - Biryani Management System{% endblock %}
+
+{% block content %}
+{% set vendors = namespace(dict={}) %}
+{% set categories = namespace(dict={}) %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-shopping-cart me-2"></i> Supplier Purchases</h2>
+        <p class="text-muted">Record and manage purchases from suppliers</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Add New Purchase Form -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Add New Purchase</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_purchases') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="vendor_name" class="form-label">{{ form.vendor_name.label }}</label>
+                        {{ form.vendor_name(class="form-control") }}
+                        {% if form.vendor_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.vendor_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="ingredient_id" class="form-label">{{ form.ingredient_id.label }}</label>
+                        {{ form.ingredient_id(class="form-select") }}
+                        {% if form.ingredient_id.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.ingredient_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">{{ form.quantity.label }}</label>
+                                {{ form.quantity(class="form-control") }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.quantity.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="rate_per_unit" class="form-label">{{ form.rate_per_unit.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    {{ form.rate_per_unit(class="form-control") }}
+                                </div>
+                                {% if form.rate_per_unit.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.rate_per_unit.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="payment_made" class="form-label">{{ form.payment_made.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    {{ form.payment_made(class="form-control") }}
+                                </div>
+                                {% if form.payment_made.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.payment_made.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="payment_mode" class="form-label">{{ form.payment_mode.label }}</label>
+                                {{ form.payment_mode(class="form-select") }}
+                                {% if form.payment_mode.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.payment_mode.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-text mb-2">
+                            <strong>Total Amount</strong> will be calculated as Quantity × Rate per Unit<br>
+                            <strong>Balance Amount</strong> will be calculated as Total Amount - Payment Made
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Purchase Guidelines -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Purchase Guidelines</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Always verify the quantity and quality before recording
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Save invoices and receipts for reconciliation
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        For credit purchases, track balance amounts
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Record purchases immediately to keep inventory updated
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Monitor price fluctuations across different suppliers
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Purchase Records -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i> Purchase History</h5>
+            </div>
+            <div class="card-body">
+                {% if purchases %}
+                <div class="table-responsive">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Vendor</th>
+                                <th>Ingredient</th>
+                                <th>Quantity</th>
+                                <th>Rate</th>
+                                <th>Total</th>
+                                <th>Payment</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase, ingredient in purchases %}
+                            <tr>
+                                <td>{{ purchase.date.strftime('%d %b, %Y') }}</td>
+                                <td>{{ purchase.vendor_name }}</td>
+                                <td>{{ ingredient.name }}</td>
+                                <td>{{ purchase.quantity }} {{ ingredient.unit }}</td>
+                                <td>₹{{ purchase.rate_per_unit }}</td>
+                                <td>₹{{ purchase.total_amount }}</td>
+                                <td>
+                                    ₹{{ purchase.payment_made }}
+                                    <span class="badge bg-secondary">{{ purchase.payment_mode }}</span>
+                                </td>
+                                <td>
+                                    ₹{{ purchase.balance_amount }}
+                                    {% if purchase.balance_amount > 0 %}
+                                    <span class="badge bg-warning text-dark">Credit</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h5>No Purchase Records</h5>
+                    <p>Record your first purchase using the form on the left.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Purchase Summary -->
+        {% if purchases %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Purchase Summary</h5>
+            </div>
+            <div class="card-body">
+                {% set total_spent = namespace(value=0) %}
+                {% set pending_payments = namespace(value=0) %}
+                <!-- Initialize dictionaries for summary data -->
+                <!-- Removing duplicate declarations -->
+                
+                {% for purchase, ingredient in purchases %}
+                    {% set total_spent.value = total_spent.value + purchase.payment_made %}
+                    {% set pending_payments.value = pending_payments.value + purchase.balance_amount %}
+                    
+                    {% if purchase.vendor_name in vendors.dict %}
+                        {% set _ = vendors.dict.update({purchase.vendor_name: vendors.dict[purchase.vendor_name] + purchase.total_amount}) %}
+                    {% else %}
+                        {% set _ = vendors.dict.update({purchase.vendor_name: purchase.total_amount}) %}
+                    {% endif %}
+                    
+                    {% if ingredient.category in categories.dict %}
+                        {% set _ = categories.dict.update({ingredient.category: categories.dict[ingredient.category] + purchase.total_amount}) %}
+                    {% else %}
+                        {% set _ = categories.dict.update({ingredient.category: purchase.total_amount}) %}
+                    {% endif %}
+                {% endfor %}
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <h3>₹{{ total_spent.value|round(2) }}</h3>
+                                <p class="text-muted mb-0">Total Payments Made</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <h3>₹{{ pending_payments.value|round(2) }}</h3>
+                                <p class="text-muted mb-0">Pending Payments</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <h3>{{ vendors.dict|length }}</h3>
+                                <p class="text-muted mb-0">Total Vendors</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Top Vendors</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Vendor</th>
+                                        <th>Total Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for vendor, amount in (vendors.dict|dictsort(by='value', reverse=true))[:5] %}
+                                    <tr>
+                                        <td>{{ vendor }}</td>
+                                        <td>₹{{ amount|round(2) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Spending by Category</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Total Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for category, amount in (categories.dict|dictsort(by='value', reverse=true)) %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge 
+                                                {% if category == 'Spices' %}bg-primary
+                                                {% elif category == 'Vegetables' %}bg-success
+                                                {% elif category == 'Meat' %}bg-danger
+                                                {% elif category == 'Dairy' %}bg-info
+                                                {% elif category == 'Grains' %}bg-warning text-dark
+                                                {% elif category == 'Herbs' %}bg-success
+                                                {% elif category == 'Oils' %}bg-secondary
+                                                {% else %}bg-dark
+                                                {% endif %}">
+                                                {{ category }}
+                                            </span>
+                                        </td>
+                                        <td>₹{{ amount|round(2) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate total and balance amount dynamically
+    const quantityInput = document.querySelector('input[name="quantity"]');
+    const rateInput = document.querySelector('input[name="rate_per_unit"]');
+    const paymentInput = document.querySelector('input[name="payment_made"]');
+    
+    function updateAmounts() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const rate = parseFloat(rateInput.value) || 0;
+        const payment = parseFloat(paymentInput.value) || 0;
+        
+        const totalAmount = quantity * rate;
+        
+        // You could display these calculated values in the form
+        const formText = document.querySelector('.form-text');
+        formText.innerHTML = `
+            <strong>Total Amount:</strong> ₹${totalAmount.toFixed(2)}<br>
+            <strong>Balance Amount:</strong> ₹${Math.max(0, totalAmount - payment).toFixed(2)}
+        `;
+    }
+    
+    if (quantityInput && rateInput && paymentInput) {
+        quantityInput.addEventListener('input', updateAmounts);
+        rateInput.addEventListener('input', updateAmounts);
+        paymentInput.addEventListener('input', updateAmounts);
+    }
+});
+</script>
+{% endblock %}

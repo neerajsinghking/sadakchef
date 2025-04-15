@@ -1,0 +1,486 @@
+{% extends 'base.html' %}
+
+{% block title %}Refill Requests - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-sync me-2"></i> Refill Requests</h2>
+        <p class="text-muted">Request biryani refills from the kitchen</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- New Refill Request Form -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> New Refill Request</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('cart_refill') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="recipe_id" class="form-label">{{ form.recipe_id.label }}</label>
+                        {{ form.recipe_id(class="form-select") }}
+                        {% if form.recipe_id.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.recipe_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">{{ form.quantity.label }}</label>
+                        {{ form.quantity(class="form-control", placeholder="Enter quantity in kg") }}
+                        {% if form.quantity.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.quantity.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Recommended quantities: 5kg, 10kg, or 15kg</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Refill Guidelines -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Refill Guidelines</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Request refills before you run out of biryani
+                    </div>
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Allow at least 30-45 minutes for preparation
+                    </div>
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Check the status of your request regularly
+                    </div>
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Mark as "Taken" once you collect the prepared food
+                    </div>
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Submit sales data for all collected biryani
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Refill Process -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i> Refill Process</h5>
+            </div>
+            <div class="card-body">
+                <div class="refill-timeline">
+                    <div class="refill-timeline-item">
+                        <h6>Request</h6>
+                        <p class="small">Cart staff submits refill request</p>
+                        <p class="time"><i class="fas fa-clock me-1"></i> Cart Staff</p>
+                    </div>
+                    <div class="refill-timeline-item">
+                        <h6>Accept</h6>
+                        <p class="small">Chef accepts the request</p>
+                        <p class="time"><i class="fas fa-clock me-1"></i> Chef</p>
+                    </div>
+                    <div class="refill-timeline-item">
+                        <h6>Prepare</h6>
+                        <p class="small">Chef prepares the food</p>
+                        <p class="time"><i class="fas fa-clock me-1"></i> Chef</p>
+                    </div>
+                    <div class="refill-timeline-item">
+                        <h6>Take</h6>
+                        <p class="small">Cart staff collects the food</p>
+                        <p class="time"><i class="fas fa-clock me-1"></i> Cart Staff</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Refill Request History -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i> Refill Request History</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-3" id="refillTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab" aria-controls="active" aria-selected="true">
+                            Active Requests
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="false">
+                            All Requests
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="today-tab" data-bs-toggle="tab" data-bs-target="#today" type="button" role="tab" aria-controls="today" aria-selected="false">
+                            Today's Requests
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="refillTabsContent">
+                    <!-- Active Requests Tab -->
+                    <div class="tab-pane fade show active" id="active" role="tabpanel" aria-labelledby="active-tab">
+                        {% set active_requests = [] %}
+                        {% for refill, sop in refill_requests %}
+                            {% if refill.status != 'taken' %}
+                                {% set _ = active_requests.append((refill, sop)) %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if active_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request Time</th>
+                                        <th>Recipe</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for refill, sop in active_requests %}
+                                    <tr>
+                                        <td>{{ refill.request_time.strftime('%H:%M, %d %b') }}</td>
+                                        <td>{{ sop.name }}</td>
+                                        <td>{{ refill.quantity }} kg</td>
+                                        <td>
+                                            <span class="status-badge status-{{ refill.status }}">
+                                                {{ refill.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if refill.status == 'prepared' %}
+                                            <form method="POST" action="{{ url_for('cart_update_refill') }}" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                                <input type="hidden" name="action" value="take">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-check me-1"></i> Take
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <p>No active refill requests at the moment.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- All Requests Tab -->
+                    <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+                        {% if refill_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request Time</th>
+                                        <th>Recipe</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th>Completed Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for refill, sop in refill_requests %}
+                                    <tr>
+                                        <td>{{ refill.request_time.strftime('%H:%M, %d %b') }}</td>
+                                        <td>{{ sop.name }}</td>
+                                        <td>{{ refill.quantity }} kg</td>
+                                        <td>
+                                            <span class="status-badge status-{{ refill.status }}">
+                                                {{ refill.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if refill.status == 'taken' and refill.taken_time %}
+                                                {{ refill.taken_time.strftime('%H:%M, %d %b') }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <p>No refill request history found.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Today's Requests Tab -->
+                    <div class="tab-pane fade" id="today" role="tabpanel" aria-labelledby="today-tab">
+                        {% set today_date = namespace(value=refill_requests[0][0].request_time.date() if refill_requests else None) %}
+                        {% set today_requests = [] %}
+                        {% for refill, sop in refill_requests %}
+                            {% if refill.request_time.date() == today_date.value %}
+                                {% set _ = today_requests.append((refill, sop)) %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if today_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request Time</th>
+                                        <th>Recipe</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for refill, sop in today_requests %}
+                                    <tr>
+                                        <td>{{ refill.request_time.strftime('%H:%M') }}</td>
+                                        <td>{{ sop.name }}</td>
+                                        <td>{{ refill.quantity }} kg</td>
+                                        <td>
+                                            <span class="status-badge status-{{ refill.status }}">
+                                                {{ refill.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if refill.status == 'prepared' %}
+                                            <form method="POST" action="{{ url_for('cart_update_refill') }}" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                                <input type="hidden" name="action" value="take">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-check me-1"></i> Take
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            
+                            <div class="mt-3">
+                                <h6>Today's Summary:</h6>
+                                <div class="row">
+                                    {% set total_kg = namespace(value=0) %}
+                                    {% set recipe_totals = namespace(dict={}) %}
+                                    
+                                    {% for refill, sop in today_requests %}
+                                        {% set total_kg.value = total_kg.value + refill.quantity %}
+                                        
+                                        {% if sop.name in recipe_totals.dict %}
+                                            {% set _ = recipe_totals.dict.update({sop.name: recipe_totals.dict[sop.name] + refill.quantity}) %}
+                                        {% else %}
+                                            {% set _ = recipe_totals.dict.update({sop.name: refill.quantity}) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    <div class="col-md-4">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center py-2">
+                                                <h4 class="mb-0">{{ total_kg.value }} kg</h4>
+                                                <p class="small mb-0">Total Requested</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center py-2">
+                                                <h4 class="mb-0">{{ today_requests|length }}</h4>
+                                                <p class="small mb-0">Total Requests</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center py-2">
+                                                <h4 class="mb-0">{{ recipe_totals.dict|length }}</h4>
+                                                <p class="small mb-0">Different Recipes</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 small">
+                                    <strong>Recipe Breakdown:</strong>
+                                    <ul class="list-unstyled">
+                                        {% for recipe, qty in recipe_totals.dict.items() %}
+                                        <li>{{ recipe }}: {{ qty }} kg</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-day fa-3x text-muted mb-3"></i>
+                            <p>No refill requests found for today.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Today's Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Today's Refill Status</h5>
+            </div>
+            <div class="card-body">
+                {% set today_date = namespace(value=refill_requests[0][0].request_time.date() if refill_requests else None) %}
+                {% set today_requests = [] %}
+                {% for refill, sop in refill_requests %}
+                    {% if refill.request_time.date() == today_date.value %}
+                        {% set _ = today_requests.append((refill, sop)) %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if today_requests %}
+                    {% set requested = namespace(count=0, kg=0) %}
+                    {% set accepted = namespace(count=0, kg=0) %}
+                    {% set prepared = namespace(count=0, kg=0) %}
+                    {% set taken = namespace(count=0, kg=0) %}
+                    
+                    {% for refill, sop in today_requests %}
+                        {% if refill.status == 'requested' %}
+                            {% set requested.count = requested.count + 1 %}
+                            {% set requested.kg = requested.kg + refill.quantity %}
+                        {% elif refill.status == 'accepted' %}
+                            {% set accepted.count = accepted.count + 1 %}
+                            {% set accepted.kg = accepted.kg + refill.quantity %}
+                        {% elif refill.status == 'prepared' %}
+                            {% set prepared.count = prepared.count + 1 %}
+                            {% set prepared.kg = prepared.kg + refill.quantity %}
+                        {% elif refill.status == 'taken' %}
+                            {% set taken.count = taken.count + 1 %}
+                            {% set taken.kg = taken.kg + refill.quantity %}
+                        {% endif %}
+                    {% endfor %}
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <div class="mb-2">
+                                    <span class="status-badge status-requested">Requested</span>
+                                </div>
+                                <h4>{{ requested.count }}</h4>
+                                <p class="small mb-0">{{ requested.kg }} kg</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <div class="mb-2">
+                                    <span class="status-badge status-accepted">Accepted</span>
+                                </div>
+                                <h4>{{ accepted.count }}</h4>
+                                <p class="small mb-0">{{ accepted.kg }} kg</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <div class="mb-2">
+                                    <span class="status-badge status-prepared">Prepared</span>
+                                </div>
+                                <h4>{{ prepared.count }}</h4>
+                                <p class="small mb-0">{{ prepared.kg }} kg</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3">
+                            <div class="card-body text-center py-3">
+                                <div class="mb-2">
+                                    <span class="status-badge status-taken">Taken</span>
+                                </div>
+                                <h4>{{ taken.count }}</h4>
+                                <p class="small mb-0">{{ taken.kg }} kg</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress mt-3" style="height: 30px;">
+                    {% set total_kg = requested.kg + accepted.kg + prepared.kg + taken.kg %}
+                    {% if total_kg > 0 %}
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (requested.kg / total_kg * 100)|round }}%" 
+                             aria-valuenow="{{ (requested.kg / total_kg * 100)|round }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ requested.kg }} kg
+                        </div>
+                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ (accepted.kg / total_kg * 100)|round }}%" 
+                             aria-valuenow="{{ (accepted.kg / total_kg * 100)|round }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ accepted.kg }} kg
+                        </div>
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ (prepared.kg / total_kg * 100)|round }}%" 
+                             aria-valuenow="{{ (prepared.kg / total_kg * 100)|round }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ prepared.kg }} kg
+                        </div>
+                        <div class="progress-bar bg-secondary" role="progressbar" style="width: {{ (taken.kg / total_kg * 100)|round }}%" 
+                             aria-valuenow="{{ (taken.kg / total_kg * 100)|round }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ taken.kg }} kg
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <h6>Total: {{ total_kg }} kg</h6>
+                    {% if prepared.kg > 0 %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        You have {{ prepared.kg }} kg of prepared biryani ready to be collected!
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                    <p>No refill data available for today.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Management - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-users me-2"></i> Staff Management</h2>
+        <p class="text-muted">Add and manage chefs and cart staff</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Add New Staff Form -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i> Add New Staff</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_staff') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">{{ form.username.label }}</label>
+                        {{ form.username(class="form-control") }}
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">{{ form.password.label }}</label>
+                        {{ form.password(class="form-control") }}
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">{{ form.confirm_password.label }}</label>
+                        {{ form.confirm_password(class="form-control") }}
+                        {% if form.confirm_password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.confirm_password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">{{ form.name.label }}</label>
+                        {{ form.name(class="form-control") }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">{{ form.role.label }}</label>
+                        {{ form.role(class="form-select") }}
+                        {% if form.role.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.role.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="mobile" class="form-label">{{ form.mobile.label }}</label>
+                        {{ form.mobile(class="form-control") }}
+                        {% if form.mobile.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.mobile.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="salary" class="form-label">{{ form.salary.label }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            {{ form.salary(class="form-control") }}
+                        </div>
+                        {% if form.salary.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.salary.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Cart specific fields - shown/hidden via JavaScript -->
+                    <div id="cart-fields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="location" class="form-label">{{ form.location.label }}</label>
+                            {{ form.location(class="form-control") }}
+                            {% if form.location.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.location.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="incentive_per_kg" class="form-label">{{ form.incentive_per_kg.label }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                {{ form.incentive_per_kg(class="form-control") }}
+                            </div>
+                            {% if form.incentive_per_kg.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.incentive_per_kg.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Staff Lists -->
+    <div class="col-md-8">
+        <!-- Chefs List -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-utensils me-2"></i> Chefs</h5>
+            </div>
+            <div class="card-body">
+                {% if chefs %}
+                <div class="table-responsive">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>Mobile</th>
+                                <th>Salary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for chef in chefs %}
+                            <tr>
+                                <td>{{ chef.staff_id }}</td>
+                                <td>{{ chef.name }}</td>
+                                <td>{{ chef.username }}</td>
+                                <td>{{ chef.mobile }}</td>
+                                <td>₹{{ chef.salary }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('delete_staff', user_id=chef.id) }}" onsubmit="return confirm('Are you sure you want to delete this chef?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                    <p>No chefs added yet. Add your first chef using the form.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Cart Staff List -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i> Cart Staff</h5>
+            </div>
+            <div class="card-body">
+                {% if cart_staff %}
+                <div class="table-responsive">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>Location</th>
+                                <th>Salary</th>
+                                <th>Incentive</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for staff in cart_staff %}
+                            <tr>
+                                <td>{{ staff.staff_id }}</td>
+                                <td>{{ staff.name }}</td>
+                                <td>{{ staff.username }}</td>
+                                <td>{{ staff.location }}</td>
+                                <td>₹{{ staff.salary }}</td>
+                                <td>₹{{ staff.incentive_per_kg }}/kg</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('delete_staff', user_id=staff.id) }}" onsubmit="return confirm('Are you sure you want to delete this cart staff?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <p>No cart staff added yet. Add your first cart staff using the form.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide cart-specific fields based on role selection
+        const roleSelect = document.getElementById('role');
+        const cartFields = document.getElementById('cart-fields');
+        
+        function toggleCartFields() {
+            if (roleSelect.value === 'cart') {
+                cartFields.style.display = 'block';
+            } else {
+                cartFields.style.display = 'none';
+            }
+        }
+        
+        // Initial toggle
+        toggleCartFields();
+        
+        // Add change listener
+        roleSelect.addEventListener('change', toggleCartFields);
+    });
+</script>
+{% endblock %}

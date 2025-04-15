@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}Cart Dashboard - Biryani Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-tachometer-alt me-2"></i> Cart Dashboard</h2>
+        <p class="text-muted">Manage your cart operations and sales</p>
+    </div>
+</div>
+
+<!-- Status Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-warning">
+                    <i class="fas fa-weight"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ kg_taken }} kg</p>
+                    <p class="stats-text">Today's Biryani Taken</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-success">
+                    <i class="fas fa-cash-register"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ sales_submitted and 'Submitted' or 'Pending' }}</p>
+                    <p class="stats-text">Today's Sales</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card mb-3">
+            <div class="card-body">
+                <div class="stats-icon text-info">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="stats-info">
+                    <p class="stats-number">{{ attendance_submitted and 'Submitted' or 'Pending' }}</p>
+                    <p class="stats-text">Today's Attendance</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Refill Status -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-sync me-2"></i> Refill Status</h5>
+                <a href="{{ url_for('cart_refill') }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i> Request Refill
+                </a>
+            </div>
+            <div class="card-body">
+                {% if refill_status %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Request Time</th>
+                                <th>Recipe</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for refill, sop in refill_status %}
+                            <tr>
+                                <td>{{ refill.request_time.strftime('%H:%M, %d %b') }}</td>
+                                <td>{{ sop.name }}</td>
+                                <td>{{ refill.quantity }} kg</td>
+                                <td>
+                                    <span class="status-badge status-{{ refill.status }}">
+                                        {{ refill.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if refill.status == 'prepared' %}
+                                    <form method="POST" action="{{ url_for('cart_update_refill') }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="refill_id" value="{{ refill.id }}">
+                                        <input type="hidden" name="action" value="take">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check me-1"></i> Take
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-sync fa-3x text-muted mb-3"></i>
+                    <p>No recent refill requests.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('cart_refill') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-sync fa-2x text-primary mb-3"></i>
+                                <h5>Request Refill</h5>
+                                <p class="small text-muted mb-0">Request more biryani from kitchen</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('cart_sales') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-cash-register fa-2x text-success mb-3"></i>
+                                <h5>Enter Sales</h5>
+                                <p class="small text-muted mb-0">Submit today's sales data</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('cart_attendance') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-clipboard-check fa-2x text-warning mb-3"></i>
+                                <h5>Submit Attendance</h5>
+                                <p class="small text-muted mb-0">Mark your daily attendance</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('customer_feedback') }}" target="_blank" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-qrcode fa-2x text-info mb-3"></i>
+                                <h5>Feedback QR</h5>
+                                <p class="small text-muted mb-0">View customer feedback QR code</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Tasks -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i> Daily Tasks</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Request Refills as Needed</h6>
+                            <p class="small mb-0">Request more biryani when stock is running low</p>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">1</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Submit Daily Sales</h6>
+                            <p class="small mb-0">Enter today's sales data including cash and UPI payments</p>
+                        </div>
+                        <span class="badge {% if sales_submitted %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill">2</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Submit Attendance</h6>
+                            <p class="small mb-0">Mark your daily attendance before end of day</p>
+                        </div>
+                        <span class="badge {% if attendance_submitted %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill">3</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Display Feedback QR Code</h6>
+                            <p class="small mb-0">Ensure the feedback QR code is visible to customers</p>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">4</span>
+                    </div>
+                </div>
+                
+                <div class="alert {% if not sales_submitted or not attendance_submitted %}alert-warning{% else %}alert-success{% endif %} mt-3">
+                    <i class="fas {% if not sales_submitted or not attendance_submitted %}fa-exclamation-triangle{% else %}fa-check-circle{% endif %} me-2"></i>
+                    {% if not sales_submitted and not attendance_submitted %}
+                        <strong>Reminder:</strong> You still need to submit both your sales data and attendance for today.
+                    {% elif not sales_submitted %}
+                        <strong>Reminder:</strong> You still need to submit your sales data for today.
+                    {% elif not attendance_submitted %}
+                        <strong>Reminder:</strong> You still need to submit your attendance for today.
+                    {% else %}
+                        <strong>Great job!</strong> You've completed all required tasks for today.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Information -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Cart Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user me-2"></i> Staff Details</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Name:</th>
+                                <td>{{ current_user.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Cart ID:</th>
+                                <td>{{ current_user.staff_id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Location:</th>
+                                <td>{{ current_user.location }}</td>
+                            </tr>
+                            <tr>
+                                <th>Incentive:</th>
+                                <td>₹{{ current_user.incentive_per_kg }}/kg</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-line me-2"></i> Performance Metrics</h6>
+                        <div class="row text-center">
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body py-3">
+                                        <h3 class="mb-0">{{ kg_taken }} kg</h3>
+                                        <p class="small mb-0">Today's Quantity</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body py-3">
+                                        <h3 class="mb-0">{{ kg_taken * 200 }}₹</h3>
+                                        <p class="small mb-0">Potential Revenue</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body py-3">
+                                        <h3 class="mb-0">{{ '%.1f'|format(kg_taken * current_user.incentive_per_kg) }}₹</h3>
+                                        <p class="small mb-0">Potential Incentive</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body py-3">
+                                        <h3 class="mb-0">{{ refill_status|length }}</h3>
+                                        <p class="small mb-0">Refill Requests</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
