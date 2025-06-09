@@ -1,0 +1,578 @@
+{% extends "base.html" %}
+
+{% block title %}Refill Requests - SadakChef{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i data-feather="list" class="me-2"></i>Refill Requests</h1>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" onclick="refreshData()">
+            <i data-feather="refresh-cw" class="me-1"></i>Refresh
+        </button>
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i data-feather="filter" class="me-1"></i>Filter
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="filterStatus('all')">All Requests</a></li>
+                <li><a class="dropdown-item" href="#" onclick="filterStatus('requested')">Pending</a></li>
+                <li><a class="dropdown-item" href="#" onclick="filterStatus('taken_by_chef')">In Progress</a></li>
+                <li><a class="dropdown-item" href="#" onclick="filterStatus('prepared')">Prepared</a></li>
+                <li><a class="dropdown-item" href="#" onclick="filterStatus('taken_by_cart')">Completed</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Status Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h5 id="pendingCount">{{ status_counts.pending }}</h5>
+                <p class="mb-0">Pending</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 id="progressCount">{{ status_counts.in_progress }}</h5>
+                <p class="mb-0">In Progress</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5 id="preparedCount">{{ status_counts.prepared }}</h5>
+                <p class="mb-0">Prepared</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 id="completedCount">{{ status_counts.completed }}</h5>
+                <p class="mb-0">Completed</p>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Today's Refill Requests Section -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5><i data-feather="activity" class="me-2"></i>Today's Refill Requests</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Request Time</th>
+                        <th>Cart Staff</th>
+                        <th>Recipe</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Quality</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if today_refills %}
+                        {% for refill in today_refills %}
+                        <tr data-status="{{ refill.status }}">
+                            <td>
+                                <strong>{{ refill.request_time.strftime('%H:%M') if refill.request_time else '-' }}</strong><br>
+                                <small class="text-muted">{{ refill.request_time.strftime('%d/%m/%Y') if refill.request_time else '-' }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ refill.cart_staff.name }}</strong><br>
+                                <small class="text-muted">{{ refill.cart_staff.mobile_no }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ refill.sop.recipe_name }}</span><br>
+                                <small class="text-muted">₹{{ refill.sop.recipe_rate }}/kg</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info fs-6">{{ refill.kg_request }} kg</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 
+                                    'warning' if refill.status == 'requested' else
+                                    'info' if refill.status == 'taken_by_chef' else
+                                    'primary' if refill.status == 'prepared' else
+                                    'success'
+                                }}">
+                                    {{ refill.status|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-{{ 
+                                        'warning' if refill.status == 'requested' else
+                                        'info' if refill.status == 'taken_by_chef' else
+                                        'primary' if refill.status == 'prepared' else
+                                        'success'
+                                    }}" style="width: {{ 
+                                        25 if refill.status == 'requested' else
+                                        50 if refill.status == 'taken_by_chef' else
+                                        75 if refill.status == 'prepared' else
+                                        90 if refill.status == 'picked_up' else
+                                        100
+                                    }}%"></div>
+                                </div>
+                                <small class="text-muted">
+                                    {% if refill.status == 'requested' %}Request Sent
+                                    {% elif refill.status == 'taken_by_chef' %}Chef Working
+                                    {% elif refill.status == 'prepared' %}Ready for Pickup
+                                    {% elif refill.status == 'picked_up' %}Out for Delivery
+                                    {% else %}Delivered
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if refill.quality_status == 'verified' %}
+                                    <span class="badge bg-success">
+                                        <i data-feather="check-circle" style="width: 12px; height: 12px;"></i>
+                                        Verified
+                                    </span>
+                                {% elif refill.quality_status == 'issue' %}
+                                    <span class="badge bg-danger">
+                                        <i data-feather="alert-triangle" style="width: 12px; height: 12px;"></i>
+                                        Issue
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Pending</span>
+                                {% endif %}
+                                {% if refill.quality_notes %}
+                                    <br><small class="text-muted">{{ refill.quality_notes[:30] }}...</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if refill.status == 'requested' %}
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('kitchen_accept_refill', refill_id=refill.id) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i data-feather="play" class="me-1"></i>Accept
+                                        </a>
+                                        <button class="btn btn-sm btn-info" onclick="viewIngredients({{ refill.sop_id }}, {{ refill.kg_request }}, '{{ refill.sop.recipe_name }}')">
+                                            <i data-feather="list" class="me-1"></i>View
+                                        </button>
+                                    </div>
+                                {% elif refill.status == 'taken_by_chef' %}
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-success" onclick="markPrepared({{ refill.id }})">
+                                            <i data-feather="check" class="me-1"></i>Prepared
+                                        </button>
+                                        <button class="btn btn-sm btn-info" onclick="viewIngredients({{ refill.sop_id }}, {{ refill.kg_request }}, '{{ refill.sop.recipe_name }}')">
+                                            <i data-feather="list" class="me-1"></i>View
+                                        </button>
+                                    </div>
+                                {% elif refill.status == 'prepared' %}
+                                    <div class="btn-group">
+                                        <span class="text-success">
+                                            <i data-feather="check-circle" class="me-1"></i>Ready
+                                        </span>
+                                        <button class="btn btn-sm btn-info" onclick="viewIngredients({{ refill.sop_id }}, {{ refill.kg_request }}, '{{ refill.sop.recipe_name }}')">
+                                            <i data-feather="list" class="me-1"></i>View
+                                        </button>
+                                    </div>
+                                {% elif refill.status == 'picked_up' %}
+                                    <span class="text-warning">
+                                        <i data-feather="truck" class="me-1"></i>Out for Delivery
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i data-feather="check-circle-2" class="me-1"></i>Completed
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i data-feather="calendar" style="width: 48px; height: 48px;" class="text-muted mb-3"></i>
+                                <h6 class="text-muted">No refill requests today</h6>
+                                <p class="text-muted">No refill requests have been submitted today yet.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Refill Requests Table -->
+<div class="card">
+    <div class="card-header">
+        <h5><i data-feather="clock" class="me-2"></i>All Refill Requests</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Request Time</th>
+                        <th>Cart Staff</th>
+                        <th>Recipe</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Quality</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="refillTable">
+                    {% for refill in refill_requests.items %}
+                    <tr data-status="{{ refill.status }}">
+                        <td>
+                            <strong>{{ refill.request_time.strftime('%H:%M') if refill.request_time else '-' }}</strong><br>
+                            <small class="text-muted">{{ refill.request_time.strftime('%d/%m/%Y') if refill.request_time else '-' }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ refill.cart_staff.name }}</strong><br>
+                            <small class="text-muted">{{ refill.cart_staff.mobile_no }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ refill.sop.recipe_name }}</span><br>
+                            <small class="text-muted">₹{{ refill.sop.recipe_rate }}/kg</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info fs-6">{{ refill.kg_request }} kg</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 
+                                'warning' if refill.status == 'requested' else
+                                'info' if refill.status == 'taken_by_chef' else
+                                'primary' if refill.status == 'prepared' else
+                                'success'
+                            }}">
+                                {{ refill.status|replace('_', ' ')|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-{{ 
+                                    'warning' if refill.status == 'requested' else
+                                    'info' if refill.status == 'taken_by_chef' else
+                                    'primary' if refill.status == 'prepared' else
+                                    'success'
+                                }}" style="width: {{ 
+                                    25 if refill.status == 'requested' else
+                                    50 if refill.status == 'taken_by_chef' else
+                                    75 if refill.status == 'prepared' else
+                                    90 if refill.status == 'picked_up' else
+                                    100
+                                }}%"></div>
+                            </div>
+                            <small class="text-muted">
+                                {% if refill.status == 'requested' %}Request Sent
+                                {% elif refill.status == 'taken_by_chef' %}Chef Working
+                                {% elif refill.status == 'prepared' %}Ready for Pickup
+                                {% elif refill.status == 'picked_up' %}Out for Delivery
+                                {% else %}Delivered
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td>
+                            {% if refill.quality_status == 'verified' %}
+                                <span class="badge bg-success">
+                                    <i data-feather="check-circle" style="width: 12px; height: 12px;"></i>
+                                    Verified
+                                </span>
+                            {% elif refill.quality_status == 'issue' %}
+                                <span class="badge bg-danger">
+                                    <i data-feather="alert-triangle" style="width: 12px; height: 12px;"></i>
+                                    Issue
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">Pending</span>
+                            {% endif %}
+                            {% if refill.quality_notes %}
+                                <br><small class="text-muted">{{ refill.quality_notes[:30] }}...</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if refill.status == 'requested' %}
+                                <div class="btn-group">
+                                    <a href="{{ url_for('kitchen_accept_refill', refill_id=refill.id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i data-feather="play" class="me-1"></i>Accept
+                                    </a>
+                                    <button class="btn btn-sm btn-info" onclick="viewIngredients({{ refill.sop_id }}, {{ refill.kg_request }}, '{{ refill.sop.recipe_name }}')">
+                                        <i data-feather="list" class="me-1"></i>View
+                                    </button>
+                                </div>
+                            {% elif refill.status == 'taken_by_chef' %}
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-success" onclick="markPrepared({{ refill.id }})">
+                                        <i data-feather="check" class="me-1"></i>Prepared
+                                    </button>
+                                    <button class="btn btn-sm btn-info" onclick="viewIngredients({{ refill.sop_id }}, {{ refill.kg_request }}, '{{ refill.sop.recipe_name }}')">
+                                        <i data-feather="list" class="me-1"></i>View
+                                    </button>
+                                </div>
+                            {% elif refill.status == 'prepared' %}
+                                <div class="btn-group">
+                                    <span class="text-success">
+                                        <i data-feather="check-circle" class="me-1"></i>Ready
+                                    </span>
+                                    <button class="btn btn-sm btn-info" onclick="viewIngredients({{ refill.sop_id }}, {{ refill.kg_request }}, '{{ refill.sop.recipe_name }}')">
+                                        <i data-feather="list" class="me-1"></i>View
+                                    </button>
+                                </div>
+                            {% elif refill.status == 'picked_up' %}
+                                <span class="text-warning">
+                                    <i data-feather="truck" class="me-1"></i>Out for Delivery
+                                </span>
+                            {% else %}
+                                <span class="text-muted">
+                                    <i data-feather="check-circle-2" class="me-1"></i>Completed
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not refill_requests.items %}
+        <div class="text-center py-5">
+            <i data-feather="inbox" style="width: 64px; height: 64px;" class="text-muted mb-3"></i>
+            <h5 class="text-muted">No refill requests found</h5>
+            <p class="text-muted">Refill requests will appear here when cart staff submit them.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if refill_requests.pages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="Refill requests pagination">
+            <ul class="pagination justify-content-center mb-0">
+                {% if refill_requests.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('kitchen_refill_requests', page=refill_requests.prev_num) }}">
+                        <i data-feather="chevron-left"></i> Previous
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for page_num in refill_requests.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != refill_requests.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('kitchen_refill_requests', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if refill_requests.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('kitchen_refill_requests', page=refill_requests.next_num) }}">
+                        Next <i data-feather="chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <div class="text-center mt-2">
+            <small class="text-muted">
+                Showing {{ (refill_requests.page - 1) * 10 + 1 }} to 
+                {{ refill_requests.page * 10 if refill_requests.page * 10 < refill_requests.total else refill_requests.total }} 
+                of {{ refill_requests.total }} refill requests
+            </small>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Mark Prepared Modal -->
+<div class="modal fade" id="preparedModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i data-feather="check-circle" class="me-2"></i>Mark as Prepared
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="preparedForm" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        Marking as prepared will automatically deduct ingredients from inventory based on the SOP.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Quality Status *</label>
+                        <select name="quality_status" class="form-select" required>
+                            <option value="verified">Quality Verified ✓</option>
+                            <option value="issue">Quality Issue ⚠️</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Quality Notes</label>
+                        <textarea name="quality_notes" class="form-control" rows="3" 
+                                  placeholder="Optional notes about preparation, quality checks, or any issues..."></textarea>
+                        <div class="form-text">Note any quality observations or preparation details</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i data-feather="x" class="me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i data-feather="check" class="me-2"></i>Mark as Prepared
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Ingredients Modal -->
+<div class="modal fade" id="ingredientsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Recipe Ingredients</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ingredientsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshData() {
+    location.reload();
+}
+
+function filterStatus(status) {
+    const rows = document.querySelectorAll('#refillTable tr');
+
+    rows.forEach(row => {
+        if (status === 'all' || row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function markPrepared(refillId) {
+    document.getElementById('preparedForm').action = `/kitchen/mark_prepared/${refillId}`;
+    new bootstrap.Modal(document.getElementById('preparedModal')).show();
+}
+
+function viewIngredients(sopId, requestedKg, recipeName) {
+    fetch(`/api/recipe_ingredients/${sopId}?kg=${requestedKg}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            const modalTitle = document.querySelector('#ingredientsModal .modal-title');
+            modalTitle.textContent = `${recipeName} (${requestedKg}kg) - Required Ingredients`;
+
+            const ingredientsList = document.getElementById('ingredientsList');
+            ingredientsList.innerHTML = '';
+
+            // Create table for ingredients
+            const table = document.createElement('table');
+            table.className = 'table table-bordered';
+
+            // Add table header
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>Ingredient</th>
+                    <th>Required Quantity</th>
+                    <th>Available Stock</th>
+                    <th>Status</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+
+            // Add table body
+            const tbody = document.createElement('tbody');
+            data.ingredients.forEach(ing => {
+                const tr = document.createElement('tr');
+                const stockStatus = ing.available >= ing.required ? 'success' : 'danger';
+                tr.innerHTML = `
+                    <td>
+                        ${ing.name}
+                        ${ing.note ? `<br><small class="text-muted">${ing.note}</small>` : ''}
+                    </td>
+                    <td>${ing.required} ${ing.unit}</td>
+                    <td>${ing.available} ${ing.unit}</td>
+                    <td><span class="badge bg-${stockStatus}">
+                        ${ing.available >= ing.required ? 'Available' : 'Low Stock'}
+                    </span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            ingredientsList.appendChild(table);
+
+            // Show the modal
+            new bootstrap.Modal(document.getElementById('ingredientsModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading ingredients');
+        });
+}
+
+// Auto-refresh every 30 seconds
+setInterval(refreshData, 30000);
+
+// Listen for new refill notifications
+if (window.socket) {
+    window.socket.on('notification', function(data) {
+        if (data.type === 'new_refill') {
+            // Refresh the page to show new refill
+            setTimeout(refreshData, 1000);
+        }
+    });
+}
+
+// Play notification sound for new requests (if supported)
+let lastCount = {{ status_counts.pending }};
+function checkForNewRequests() {
+    // In a real implementation, this would check via API
+    // For now, we'll just refresh the page periodically
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+});
+</script>
+{% endblock %}

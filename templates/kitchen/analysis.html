@@ -1,0 +1,399 @@
+
+{% extends "base.html" %}
+
+{% block title %}Business Analytics - Kitchen Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i data-feather="trending-up" class="me-2"></i>Business Analytics</h2>
+        <div class="d-flex gap-2">
+            <span class="badge bg-primary fs-6">{{ current_user.kitchen.city }}</span>
+            <span class="badge bg-secondary fs-6">{{ current_user.kitchen.kitchen_id }}</span>
+            <a href="{{ url_for('kitchen_dashboard') }}" class="btn btn-outline-secondary">
+                <i data-feather="arrow-left" class="me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <p class="text-muted">Comprehensive analysis of your business metrics</p>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ start_date }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ end_date }}" required>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i data-feather="search" class="me-2"></i>Update
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="setQuickRange('week')">
+                                This Week
+                            </button>
+                            <button type="button" class="btn btn-outline-success" onclick="setQuickRange('month')">
+                                This Month
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6><i data-feather="calendar" class="me-2"></i>Showing data from</h6>
+                    <p class="mb-0 h5">{{ start_date }} to {{ end_date }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">₹{{ revenue_values|sum|round|int if revenue_values else 0 }}</h4>
+                            <p class="card-text">Total Revenue</p>
+                        </div>
+                        <i data-feather="dollar-sign" style="width: 48px; height: 48px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ production_quantities|sum|round|int if production_quantities else 0 }} kg</h4>
+                            <p class="card-text">Total Production</p>
+                        </div>
+                        <i data-feather="package" style="width: 48px; height: 48px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ sop_quantities|length if sop_quantities else 0 }}</h4>
+                            <p class="card-text">Active Recipes</p>
+                        </div>
+                        <i data-feather="book" style="width: 48px; height: 48px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">₹{{ payment_amounts|sum|round|int if payment_amounts else 0 }}</h4>
+                            <p class="card-text">Total Collections</p>
+                        </div>
+                        <i data-feather="credit-card" style="width: 48px; height: 48px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <!-- Revenue Trend Chart -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i data-feather="trending-up" class="me-2"></i>Revenue Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recipe Sales Distribution -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i data-feather="pie-chart" class="me-2"></i>Recipe Sales Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="sopChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <!-- Production vs Sales -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i data-feather="bar-chart" class="me-2"></i>Production Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="productionChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment Mode Distribution -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i data-feather="credit-card" class="me-2"></i>Payment Mode Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Usage by Unit -->
+    {% if inventory_by_unit %}
+    <div class="row">
+        {% for unit, data in inventory_by_unit.items() %}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i data-feather="package" class="me-2"></i>Inventory Usage - {{ unit }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="inventoryChart{{ loop.index }}" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Trend Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueData = {{ revenue_values|safe if revenue_values else '[]' }};
+    const revenueDates = {{ revenue_dates|safe if revenue_dates else '[]' }};
+    
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: revenueDates.map(date => {
+                const d = new Date(date);
+                return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+            }),
+            datasets: [{
+                label: 'Daily Revenue (₹)',
+                data: revenueData,
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Revenue: ₹' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Recipe Sales Distribution Chart
+    const sopCtx = document.getElementById('sopChart').getContext('2d');
+    const sopNames = {{ sop_names|safe if sop_names else '[]' }};
+    const sopQuantities = {{ sop_quantities|safe if sop_quantities else '[]' }};
+    
+    if (sopNames.length > 0) {
+        new Chart(sopCtx, {
+            type: 'doughnut',
+            data: {
+                labels: sopNames,
+                datasets: [{
+                    data: sopQuantities,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                        '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + ' kg';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Production Trend Chart
+    const productionCtx = document.getElementById('productionChart').getContext('2d');
+    const productionData = {{ production_quantities|safe if production_quantities else '[]' }};
+    const productionDates = {{ production_dates|safe if production_dates else '[]' }};
+    
+    new Chart(productionCtx, {
+        type: 'bar',
+        data: {
+            labels: productionDates.map(date => {
+                const d = new Date(date);
+                return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+            }),
+            datasets: [{
+                label: 'Production (kg)',
+                data: productionData,
+                backgroundColor: '#0d6efd',
+                borderColor: '#0d6efd',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' kg';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Payment Mode Chart
+    const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+    const paymentModes = {{ payment_modes|safe if payment_modes else '["Cash", "UPI"]' }};
+    const paymentAmounts = {{ payment_amounts|safe if payment_amounts else '[0, 0]' }};
+    
+    new Chart(paymentCtx, {
+        type: 'pie',
+        data: {
+            labels: paymentModes,
+            datasets: [{
+                data: paymentAmounts,
+                backgroundColor: ['#28a745', '#17a2b8']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ₹' + context.parsed.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Inventory Charts
+    {% if inventory_by_unit %}
+    {% for unit, data in inventory_by_unit.items() %}
+    const inventoryCtx{{ loop.index }} = document.getElementById('inventoryChart{{ loop.index }}').getContext('2d');
+    new Chart(inventoryCtx{{ loop.index }}, {
+        type: 'bar',
+        data: {
+            labels: {{ data.labels|safe }},
+            datasets: [{
+                label: 'Usage ({{ unit }})',
+                data: {{ data.datasets[0].data|safe }},
+                backgroundColor: '#ffc107',
+                borderColor: '#ffc107',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' {{ unit }}';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endfor %}
+    {% endif %}
+});
+
+// Quick date range functions
+function setQuickRange(type) {
+    const today = new Date();
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    endDate.value = today.toISOString().split('T')[0];
+    
+    if (type === 'week') {
+        const weekAgo = new Date(today.getTime() - (7 * 24 * 60 * 60 * 1000));
+        startDate.value = weekAgo.toISOString().split('T')[0];
+    } else if (type === 'month') {
+        const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+        startDate.value = monthAgo.toISOString().split('T')[0];
+    }
+    
+    // Submit form automatically
+    startDate.closest('form').submit();
+}
+</script>
+{% endblock %}

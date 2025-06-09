@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory Management - SadakChef{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i data-feather="package" class="me-2"></i>Inventory Management</h1>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" onclick="refreshData()">
+            <i data-feather="refresh-cw" class="me-1"></i>Refresh
+        </button>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#adjustmentModal">
+            <i data-feather="edit-3" class="me-1"></i>Record Loss/Damage
+        </button>
+    </div>
+</div>
+
+<!-- Inventory Status Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5>{{ inventory_items|selectattr('status', 'equalto', 'OK')|list|length }}</h5>
+                <p class="mb-0">Normal Stock</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h5>{{ inventory_items|selectattr('status', 'equalto', 'Low')|list|length }}</h5>
+                <p class="mb-0">Low Stock</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h5>{{ inventory_items|selectattr('status', 'equalto', 'Critical')|list|length }}</h5>
+                <p class="mb-0">Critical Stock</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5>{{ inventory_items|length }}</h5>
+                <p class="mb-0">Total Items</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory Items Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5><i data-feather="list" class="me-2"></i>Current Inventory Status</h5>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" onchange="filterByCategory(this.value)">
+                    <option value="">All Categories</option>
+                    <option value="Grains">Grains</option>
+                    <option value="Meat">Meat</option>
+                    <option value="Vegetables">Vegetables</option>
+                    <option value="Spices">Spices</option>
+                    <option value="Dairy">Dairy</option>
+                </select>
+                <select class="form-select form-select-sm" onchange="filterByStatus(this.value)">
+                    <option value="">All Status</option>
+                    <option value="OK">Normal</option>
+                    <option value="Low">Low Stock</option>
+                    <option value="Critical">Critical</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Ingredient</th>
+                        <th>Category</th>
+                        <th>Opening Stock</th>
+                        <th>Purchased</th>
+                        <th>Used</th>
+                        <th>Loss</th>
+                        <th>Current Stock</th>
+                        <th>Min Threshold</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTable">
+                    {% for item in inventory_items %}
+                    <tr data-category="{{ item.ingredient.category }}" data-status="{{ item.status }}">
+                        <td>
+                            <strong>{{ item.ingredient.name }}</strong><br>
+                            <small class="text-muted">{{ item.ingredient.unit }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ item.ingredient.category }}</span>
+                        </td>
+                        <td>{{ item.opening_stock }}</td>
+                        <td class="text-success">+{{ item.purchase_qty }}</td>
+                        <td class="text-warning">-{{ item.used_qty }}</td>
+                        <td class="text-danger">-{{ item.loss_qty }}</td>
+                        <td>
+                            <strong class="fs-5">{{ item.closing_stock }}</strong>
+                            <small class="text-muted">{{ item.ingredient.unit }}</small>
+                        </td>
+                        <td>{{ item.min_threshold }}</td>
+                        <td>
+                            <span class="badge bg-{{ 
+                                'success' if item.status == 'OK' else
+                                'warning' if item.status == 'Low' else
+                                'danger'
+                            }}">
+                                {{ item.status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if item.status in ['Low', 'Critical'] %}
+                                <a href="{{ url_for('kitchen_supplier_purchase') }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i data-feather="shopping-cart" class="me-1"></i>Purchase
+                                </a>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    onclick="recordAdjustment('{{ item.ingredient.id }}', '{{ item.ingredient.name }}')">
+                                <i data-feather="edit-3" class="me-1"></i>Adjust
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not inventory_items %}
+        <div class="text-center py-5">
+            <i data-feather="package" style="width: 64px; height: 64px;" class="text-muted mb-3"></i>
+            <h5 class="text-muted">No inventory activity today</h5>
+            <p class="text-muted">Inventory will automatically appear when you make purchases or prepare recipes.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Inventory Adjustment Modal -->
+<div class="modal fade" id="adjustmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i data-feather="edit-3" class="me-2"></i>Record Inventory Adjustment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('kitchen_inventory_adjustment') }}" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i data-feather="alert-triangle" class="me-2"></i>
+                        Record any inventory loss or damage. This will automatically reduce the closing stock.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Ingredient *</label>
+                        <select name="ingredient_id" id="adjustmentIngredient" class="form-select" required>
+                            <option value="">Select ingredient...</option>
+                            {% for item in inventory_items %}
+                            <option value="{{ item.ingredient.id }}">
+                                {{ item.ingredient.name }} (Current: {{ item.closing_stock }} {{ item.ingredient.unit }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Quantity Lost/Damaged *</label>
+                        <input type="number" name="quantity" class="form-control" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Reason *</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="">Select reason...</option>
+                            <option value="burnt">Burnt</option>
+                            <option value="spillage">Spillage</option>
+                            <option value="theft">Theft</option>
+                            <option value="expired">Expired</option>
+                            <option value="damaged">Damaged</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Additional Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" 
+                                  placeholder="Provide details about the loss/damage..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i data-feather="x" class="me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning">
+                        <i data-feather="edit-3" class="me-2"></i>Record Adjustment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshData() {
+    location.reload();
+}
+
+function filterByCategory(category) {
+    const rows = document.querySelectorAll('#inventoryTable tr');
+    
+    rows.forEach(row => {
+        if (!category || row.dataset.category === category) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function filterByStatus(status) {
+    const rows = document.querySelectorAll('#inventoryTable tr');
+    
+    rows.forEach(row => {
+        if (!status || row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function recordAdjustment(ingredientId, ingredientName) {
+    document.getElementById('adjustmentIngredient').value = ingredientId;
+    new bootstrap.Modal(document.getElementById('adjustmentModal')).show();
+}
+
+// Auto-refresh every 2 minutes
+setInterval(refreshData, 120000);
+
+// Add visual indicators for low stock
+document.addEventListener('DOMContentLoaded', function() {
+    const criticalRows = document.querySelectorAll('[data-status="Critical"]');
+    criticalRows.forEach(row => {
+        row.classList.add('table-danger');
+    });
+    
+    const lowRows = document.querySelectorAll('[data-status="Low"]');
+    lowRows.forEach(row => {
+        row.classList.add('table-warning');
+    });
+});
+</script>
+{% endblock %}

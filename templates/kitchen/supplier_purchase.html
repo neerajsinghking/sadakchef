@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Supplier Purchases - SadakChef{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <!-- Add Purchase Form -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="shopping-cart" class="me-2"></i>Record New Purchase</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.ingredient_id.label(class="form-label") }}
+                        {{ form.ingredient_id(class="form-select") }}
+                        {% if form.ingredient_id.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.ingredient_id.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.vendor_name.label(class="form-label") }}
+                        {{ form.vendor_name(class="form-control") }}
+                        {% if form.vendor_name.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.vendor_name.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.quantity.label(class="form-label") }}
+                            {{ form.quantity(class="form-control", onchange="calculateTotal()") }}
+                            {% if form.quantity.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.quantity.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.rate_per_unit.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                {{ form.rate_per_unit(class="form-control", onchange="calculateTotal()") }}
+                            </div>
+                            {% if form.rate_per_unit.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.rate_per_unit.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Total Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="text" id="totalAmount" class="form-control" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.payment_made.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                {{ form.payment_made(class="form-control", onchange="calculateBalance()") }}
+                            </div>
+                            {% if form.payment_made.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.payment_made.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.payment_mode.label(class="form-label") }}
+                            {{ form.payment_mode(class="form-select") }}
+                            {% if form.payment_mode.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.payment_mode.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Balance Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="text" id="balanceAmount" class="form-control" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="shopping-cart" class="me-2"></i>Record Purchase
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <!-- Recent Purchases -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="clock" class="me-2"></i>Recent Purchases</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_purchases %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Ingredient</th>
+                                <th>Vendor</th>
+                                <th>Qty</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in recent_purchases %}
+                            <tr>
+                                <td><small>{{ purchase.date.strftime('%d/%m') }}</small></td>
+                                <td>
+                                    <strong>{{ purchase.ingredient.name }}</strong><br>
+                                    <small class="text-muted">{{ purchase.ingredient.category }}</small>
+                                </td>
+                                <td>{{ purchase.vendor_name }}</td>
+                                <td>{{ purchase.quantity }} {{ purchase.ingredient.unit }}</td>
+                                <td>
+                                    ₹{{ purchase.total_amount }}<br>
+                                    {% if purchase.balance_amount > 0 %}
+                                    <small class="text-danger">Bal: ₹{{ purchase.balance_amount }}</small>
+                                    {% else %}
+                                    <small class="text-success">Paid</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'info' if purchase.payment_mode == 'cash' else 'primary' }}">
+                                        {{ purchase.payment_mode|title }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i data-feather="shopping-cart" style="width: 48px; height: 48px;" class="text-muted mb-3"></i>
+                    <p class="text-muted">No purchases recorded yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Purchase Summary -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i data-feather="bar-chart-2" class="me-2"></i>Today's Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h4 class="text-primary">₹{{ recent_purchases|sum(attribute='total_amount') or 0 }}</h4>
+                            <small class="text-muted">Total Purchases</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h4 class="text-success">₹{{ recent_purchases|sum(attribute='payment_made') or 0 }}</h4>
+                            <small class="text-muted">Payments Made</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <h5 class="text-warning">₹{{ (recent_purchases|sum(attribute='total_amount') or 0) - (recent_purchases|sum(attribute='payment_made') or 0) }}</h5>
+                    <small class="text-muted">Outstanding Balance</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function calculateTotal() {
+    const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    const rate = parseFloat(document.getElementById('rate_per_unit').value) || 0;
+    const total = quantity * rate;
+    
+    document.getElementById('totalAmount').value = total.toFixed(2);
+    calculateBalance();
+}
+
+function calculateBalance() {
+    const total = parseFloat(document.getElementById('totalAmount').value) || 0;
+    const payment = parseFloat(document.getElementById('payment_made').value) || 0;
+    const balance = total - payment;
+    
+    document.getElementById('balanceAmount').value = balance.toFixed(2);
+    
+    // Color code the balance
+    const balanceField = document.getElementById('balanceAmount');
+    if (balance > 0) {
+        balanceField.classList.add('text-danger');
+        balanceField.classList.remove('text-success');
+    } else {
+        balanceField.classList.add('text-success');
+        balanceField.classList.remove('text-danger');
+    }
+}
+
+// Auto-calculate when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    calculateTotal();
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const quantity = parseFloat(document.getElementById('quantity').value);
+    const rate = parseFloat(document.getElementById('rate_per_unit').value);
+    const payment = parseFloat(document.getElementById('payment_made').value);
+    const total = quantity * rate;
+    
+    if (payment > total) {
+        e.preventDefault();
+        alert('Payment amount cannot be greater than total amount.');
+        return false;
+    }
+    
+    if (quantity <= 0 || rate <= 0) {
+        e.preventDefault();
+        alert('Quantity and rate must be greater than 0.');
+        return false;
+    }
+});
+</script>
+{% endblock %}

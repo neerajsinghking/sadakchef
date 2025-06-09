@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Add Staff - SadakChef{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i data-feather="user-plus" class="me-2"></i>Add Kitchen Staff</h1>
+    <div class="d-flex gap-2">
+        <span class="badge bg-primary fs-6">{{ current_user.name }}</span>
+        <span class="badge bg-secondary fs-6">{{ current_user.kitchen.city }}</span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="users" class="me-2"></i>Add New Staff Member</h5>
+                <small class="text-muted">You can add Cart Staff and Delivery Staff to your kitchen</small>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.username.label(class="form-label") }}
+                                {{ form.username(class="form-control") }}
+                                {% if form.username.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.username.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Minimum 4 characters, will be used for login</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.name.label(class="form-label") }}
+                                {{ form.name(class="form-control") }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.name.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.password.label(class="form-label") }}
+                                {{ form.password(class="form-control") }}
+                                {% if form.password.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.password.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Minimum 6 characters</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.confirm_password.label(class="form-label") }}
+                                {{ form.confirm_password(class="form-control") }}
+                                {% if form.confirm_password.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.confirm_password.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ form.role.label(class="form-label") }}
+                            {{ form.role(class="form-select", id="roleSelect") }}
+                            {% if form.role.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.role.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">You can only add Cart Staff and Delivery Staff</div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            {{ form.city.label(class="form-label") }}
+                            {{ form.city(class="form-select", readonly=true) }}
+                            {% if form.city.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.city.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Your kitchen's city</div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            {{ form.kitchen_id.label(class="form-label") }}
+                            {{ form.kitchen_id(class="form-select", readonly=true, id="kitchenSelect") }}
+                            {% if form.kitchen_id.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.kitchen_id.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Staff will be assigned to your kitchen</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.location.label(class="form-label") }}
+                            {{ form.location(class="form-control", id="locationInput") }}
+                            {% if form.location.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.location.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text" id="locationHelp">
+                                For Cart Staff: Enter custom cart location. For Delivery Staff: Kitchen location will be auto-filled.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.mobile_no.label(class="form-label") }}
+                                {{ form.mobile_no(class="form-control") }}
+                                {% if form.mobile_no.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.mobile_no.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.email.label(class="form-label") }}
+                                {{ form.email(class="form-control") }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.email.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.address.label(class="form-label") }}
+                        {{ form.address(class="form-control", rows="3") }}
+                        {% if form.address.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.address.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.salary.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    {{ form.salary(class="form-control") }}
+                                </div>
+                                {% if form.salary.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.salary.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.incentive.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    {{ form.incentive(class="form-control") }}
+                                    <span class="input-group-text">per kg</span>
+                                </div>
+                                {% if form.incentive.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.incentive.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">For Cart Staff only</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>Note:</strong> As a Kitchen Manager, you can only add Cart Staff and Delivery Staff to your assigned kitchen. The new staff member will receive their login credentials and can start using the system immediately.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('kitchen_dashboard') }}" class="btn btn-secondary">
+                            <i data-feather="arrow-left" class="me-2"></i>Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="user-plus" class="me-2"></i>Add Staff Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Current Kitchen Staff -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i data-feather="users" class="me-2"></i>Current Kitchen Staff</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Mobile</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in current_user.kitchen.users %}
+                                {% if user.role in ['cart_staff', 'delivery_staff'] %}
+                                <tr>
+                                    <td>{{ user.name }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if user.role == 'cart_staff' %}primary{% else %}info{% endif %}">
+                                            {{ user.role|replace('_', ' ')|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ user.mobile_no }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if user.is_active %}success{% else %}danger{% endif %}">
+                                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleSelect = document.getElementById('roleSelect');
+        const locationInput = document.getElementById('locationInput');
+        const kitchenLocation = "{{ current_user.kitchen.location }}";
+
+        function handleLocationField() {
+            const selectedRole = roleSelect.value;
+
+            if (selectedRole === 'cart_staff') {
+                locationInput.value = '';
+                locationInput.readOnly = false;
+                locationInput.placeholder = 'Enter cart location (e.g., Station Road, Market Area)';
+            } else {
+                locationInput.value = kitchenLocation;
+                locationInput.readOnly = true;
+            }
+        }
+
+        // Set initial state
+        handleLocationField();
+
+        // Handle role changes
+        roleSelect.addEventListener('change', handleLocationField);
+    });
+</script>
+{% endblock %}

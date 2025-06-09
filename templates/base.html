@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>{% block title %}SadakChef{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#212529">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SadakChef">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.svg') }}">
+
+    {% if current_user.is_authenticated %}
+    <script>
+        window.userKitchenId = {{ current_user.kitchen_id if current_user.kitchen_id else 'null' }};
+        window.userId = {{ current_user.id }};
+    </script>
+    {% endif %}
+
+    {% block head %}{% endblock %}
+</head>
+<body data-bs-theme="dark">
+    {% if current_user.is_authenticated %}
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{{ url_for('dashboard') }}">
+                <i data-feather="truck" class="me-2"></i>
+                SadakChef
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i data-feather="home" class="me-1"></i>Dashboard
+                        </a>
+                    </li>
+
+                    {% if current_user.role == 'admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i data-feather="settings" class="me-1"></i>Management
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('admin_add_kitchen') }}">Add Kitchen</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_add_user') }}">Add User</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_add_ingredient') }}">Add Ingredient</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_add_sop') }}">Add SOP</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_performance') }}">Performance</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_export_data') }}">Export Data</a></li>
+                        </ul>
+                    </li>
+                    {% elif current_user.role == 'kitchen_manager' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kitchen_refill_requests') }}">
+                            <i data-feather="list" class="me-1"></i>Refill Requests
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kitchen_inventory') }}">
+                            <i data-feather="package" class="me-2"></i>Inventory
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kitchen_supplier_purchase') }}">
+                            <i data-feather="shopping-cart" class="me-2"></i>Purchases
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kitchen_sales') }}">
+                            <i data-feather="bar-chart" class="me-2"></i>Sales
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kitchen_analysis') }}">
+                            <i data-feather="trending-up" class="me-2"></i>Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kitchen_feedback') }}">
+                            <i data-feather="message-square" class="me-2"></i>Feedback
+                        </a>
+                    </li>
+                    {% elif current_user.role == 'cart_staff' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('cart_refill_request') }}">
+                            <i data-feather="plus-circle" class="me-1"></i>Request Refill
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('cart_daily_sales') }}">
+                            <i data-feather="dollar-sign" class="me-1"></i>Daily Sales
+                        </a>
+                    </li>
+                    {% elif current_user.role == 'delivery_staff' %}
+                    <!-- Delivery staff navigation items can be added here if needed -->
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i data-feather="user" class="me-1"></i>{{ current_user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">{{ current_user.role|title }}</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('settings') }}">
+                                <i data-feather="settings" class="me-2"></i>Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i data-feather="log-out" class="me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="{% if current_user.is_authenticated %}container mt-4{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% if current_user.is_authenticated %}
+    <footer class="bg-dark text-light mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>SadakChef Management System</h6>
+                    <p class="mb-0">Kitchen: {{ current_user.kitchen.kitchen_id if current_user.kitchen else 'N/A' }}</p>
+                    <small class="text-muted">Role: {{ current_user.role|title }}</small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">© 2024 SadakChef. All rights reserved.</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- User data for socket connection -->
+    {% if current_user.is_authenticated %}
+    <script>
+        window.userKitchenId = {{ current_user.kitchen_id if current_user.kitchen_id else 'null' }};
+        window.userId = {{ current_user.id }};
+        window.userRole = '{{ current_user.role }}';
+    </script>
+    {% endif %}
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <!-- Mobile Push Notification Prompt -->
+    <script>
+        // Show notification enable button for mobile users
+        setTimeout(() => {
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                if (Notification.permission !== 'granted') {
+                    const button = document.createElement('div');
+                    button.innerHTML = `
+                        <div id="mobile-notification-prompt" style="
+                            position: fixed;
+                            bottom: 20px;
+                            left: 20px;
+                            right: 20px;
+                            background: linear-gradient(45deg, #007bff, #0056b3);
+                            color: white;
+                            padding: 15px;
+                            border-radius: 10px;
+                            text-align: center;
+                            box-shadow: 0 4px 20px rgba(0,123,255,0.4);
+                            z-index: 10000;
+                            font-size: 14px;
+                            line-height: 1.4;
+                        ">
+                            <div style="margin-bottom: 10px;">
+                                🔔 <strong>Mobile Notifications Enable करें</strong>
+                            </div>
+                            <div style="margin-bottom: 15px; font-size: 12px;">
+                                Real-time refill alerts पाने के लिए notifications allow करें
+                            </div>
+                            <button onclick="enableNotifications()" style="
+                                background: rgba(255,255,255,0.2);
+                                border: 1px solid rgba(255,255,255,0.3);
+                                color: white;
+                                padding: 8px 20px;
+                                border-radius: 5px;
+                                margin-right: 10px;
+                                cursor: pointer;
+                            ">Enable करें</button>
+                            <button onclick="document.getElementById('mobile-notification-prompt').remove()" style="
+                                background: transparent;
+                                border: 1px solid rgba(255,255,255,0.3);
+                                color: white;
+                                padding: 8px 15px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                            ">बाद में</button>
+                        </div>
+                    `;
+                    document.body.appendChild(button);
+                }
+            }
+        }, 3000);
+
+        function enableNotifications() {
+            if (window.requestNotificationPermission) {
+                window.requestNotificationPermission().then(() => {
+                    const prompt = document.getElementById('mobile-notification-prompt');
+                    if (prompt) prompt.remove();
+                });
+            }
+        }
+    </script>
+
+    <!-- Push Notification Setup -->
+    <script>
+        // Set global variables for push notifications
+        {% if current_user.is_authenticated %}
+        window.userKitchenId = {{ current_user.kitchen_id or 'null' }};
+        window.userId = {{ current_user.id }};
+        window.userRole = '{{ current_user.role }}';
+        {% endif %}
+
+        // Initialize push notifications when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show notification permission request after 2 seconds for better UX
+            setTimeout(function() {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    if (window.notificationManager) {
+                        const permissionNotif = notificationManager.info(
+                            'Enable notifications to receive real-time updates about orders and deliveries. <button onclick="requestNotificationPermission()" class="btn btn-sm btn-outline-primary ms-2">Enable</button>',
+                            0  // Don't auto-dismiss
+                        );
+                    }
+                }
+            }, 2000);
+        });
+    </script>
+
+    <script>
+        // Initialize PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                console.log('Service Worker registered:', registration);
+            }).catch(function(error) {
+                console.log('❌ Service Worker registration failed:', error);
+            });
+        }
+
+        // Handle PWA display mode
+        window.addEventListener('DOMContentLoaded', function() {
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                          window.navigator.standalone === true;
+            
+            if (isPWA) {
+                console.log('Running as PWA');
+                // Add PWA class to body for styling
+                document.body.classList.add('pwa-mode');
+                
+                // Handle any network errors gracefully
+                window.addEventListener('error', function(e) {
+                    if (e.message && e.message.includes('network')) {
+                        console.log('Network error detected, staying on current page');
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Initialize Feather icons -->
+    <script>
+        // Initialize Feather icons after DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        });
+    </script>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1055;"></div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

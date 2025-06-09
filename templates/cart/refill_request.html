@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Request Refill - SadakChef{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="plus-circle" class="me-2"></i>Request Refill</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.sop_id.label(class="form-label") }}
+                        {{ form.sop_id(class="form-select", onchange="updateRecipeDetails()") }}
+                        {% if form.sop_id.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.sop_id.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div id="recipeDetails" class="alert alert-info d-none">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Rate:</strong> ₹<span id="recipeRate">0</span> per kg
+                            </div>
+                            <div class="col-6">
+                                <strong>Base Qty:</strong> <span id="baseQty">0</span> kg
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.kg_request.label(class="form-label") }}
+                        <div class="input-group">
+                            {{ form.kg_request(class="form-control", step="0.5", min="0.5", onchange="calculateValue()") }}
+                            <span class="input-group-text">kg</span>
+                        </div>
+                        {% if form.kg_request.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.kg_request.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Minimum order: 0.5 kg</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Estimated Value</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="text" id="estimatedValue" class="form-control" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- Auto-filled Information -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h6>Auto-filled Information</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Date:</small>
+                                    <p class="mb-1" id="currentDate"></p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Time:</small>
+                                    <p class="mb-1" id="currentTime"></p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Cart Staff:</small>
+                                    <p class="mb-1">{{ current_user.name }}</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Kitchen:</small>
+                                    <p class="mb-1">{{ current_user.kitchen.kitchen_id }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>Important:</strong> You can only have one active refill request at a time. 
+                        Wait for your current request to be completed before making a new one.
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('cart_dashboard') }}" class="btn btn-secondary">
+                            <i data-feather="arrow-left" class="me-2"></i>Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="send" class="me-2"></i>Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Request Guidelines -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i data-feather="help-circle" class="me-2"></i>Request Guidelines</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Ensure you have sufficient space in your cart before requesting</li>
+                    <li>Request only the quantity you can sell to avoid wastage</li>
+                    <li>Kitchen will prepare your order based on Standard Operating Procedures</li>
+                    <li>You will be notified when your refill is ready for pickup</li>
+                    <li>Mark as received only after physically collecting the refill</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize recipe details
+let recipeData = {};
+
+// Function to fetch recipe details from backend
+async function fetchRecipeDetails(sopId) {
+    try {
+        const response = await fetch(`/api/recipe_details/${sopId}`);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching recipe details:', error);
+        return null;
+    }
+}
+
+async function updateRecipeDetails() {
+    const sopSelect = document.getElementById('sop_id');
+    const selectedId = sopSelect.value;
+    const detailsDiv = document.getElementById('recipeDetails');
+    
+    if (selectedId) {
+        if (!recipeData[selectedId]) {
+            const data = await fetchRecipeDetails(selectedId);
+            if (data) {
+                recipeData[selectedId] = data;
+            }
+        }
+        
+        if (recipeData[selectedId]) {
+            document.getElementById('recipeRate').textContent = recipeData[selectedId].recipe_rate;
+            document.getElementById('baseQty').textContent = recipeData[selectedId].base_quantity;
+            detailsDiv.classList.remove('d-none');
+            calculateValue();
+        }
+    } else {
+        detailsDiv.classList.add('d-none');
+    }
+}
+
+function calculateValue() {
+    const sopSelect = document.getElementById('sop_id');
+    const qtyInput = document.getElementById('kg_request');
+    const valueInput = document.getElementById('estimatedValue');
+    
+    const selectedId = sopSelect.value;
+    const quantity = parseFloat(qtyInput.value) || 0;
+    
+    if (selectedId && recipeData[selectedId] && quantity > 0) {
+        const rate = recipeData[selectedId].recipe_rate;
+        const value = rate * quantity;
+        valueInput.value = value.toFixed(2);
+    } else {
+        valueInput.value = '';
+    }
+}
+
+// Update current date and time
+function updateDateTime() {
+    const now = new Date();
+    const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false };
+    
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-GB', dateOptions);
+    document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-GB', timeOptions);
+}
+setInterval(updateDateTime, 1000);
+updateDateTime();
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const sopSelect = document.getElementById('sop_id');
+    const qtyInput = document.getElementById('kg_request');
+    
+    if (!sopSelect.value) {
+        e.preventDefault();
+        alert('Please select a recipe.');
+        sopSelect.focus();
+        return false;
+    }
+    
+    const quantity = parseFloat(qtyInput.value);
+    if (!quantity || quantity < 0.5) {
+        e.preventDefault();
+        alert('Please enter a valid quantity (minimum 0.5 kg).');
+        qtyInput.focus();
+        return false;
+    }
+});
+
+// Initialize recipe details when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const sopSelect = document.getElementById('sop_id');
+    if (sopSelect.value) {
+        updateRecipeDetails();
+    }
+});
+</script>
+{% endblock %}

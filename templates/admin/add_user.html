@@ -1,0 +1,701 @@
+{% extends "base.html" %}
+```
+{% block title %}Add User - SadakChef{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="user-plus" class="me-2"></i>Add New User</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.username.label(class="form-label") }}
+                            {{ form.username(class="form-control") }}
+                            {% if form.username.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.username.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.name.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control") }}
+                            {% if form.password.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.password.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{ form.confirm_password.label(class="form-label") }}
+                            {{ form.confirm_password(class="form-control") }}
+                            {% if form.confirm_password.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.confirm_password.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ form.role.label(class="form-label") }}
+                            {{ form.role(class="form-select", id="roleSelect") }}
+                            {% if form.role.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.role.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            {{ form.city.label(class="form-label") }}
+                            {{ form.city(class="form-select", id="citySelect") }}
+                            {% if form.city.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.city.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            {{ form.kitchen_id.label(class="form-label") }}
+                            {{ form.kitchen_id(class="form-select", id="kitchenSelect") }}
+                            {% if form.kitchen_id.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.kitchen_id.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.location.label(class="form-label") }}
+                            {{ form.location(class="form-control", id="locationInput") }}
+                            {% if form.location.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.location.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text" id="locationHelp">
+                                For Cart Staff: Enter custom cart location. For others: Kitchen location will be auto-filled.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.mobile_no.label(class="form-label") }}
+                            {{ form.mobile_no(class="form-control") }}
+                            {% if form.mobile_no.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.mobile_no.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control") }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.email.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.address.label(class="form-label") }}
+                        {{ form.address(class="form-control", rows="3") }}
+                        {% if form.address.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.address.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.salary.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                {{ form.salary(class="form-control") }}
+                            </div>
+                            {% if form.salary.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.salary.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{ form.incentive.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                {{ form.incentive(class="form-control") }}
+                                <span class="input-group-text">per kg</span>
+                            </div>
+                            {% if form.incentive.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.incentive.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                            <i data-feather="arrow-left" class="me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="user-plus" class="me-2"></i>Add User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Drill-Down Navigation -->
+    <div class="col-md-12 mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="map" class="me-2"></i>Browse Users by Location</h4>
+            </div>
+            <div class="card-body">
+                <!-- Navigation Breadcrumb -->
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="#" onclick="showCities()" class="text-decoration-none">
+                                <i data-feather="globe" class="me-1" style="width: 16px; height: 16px;"></i>
+                                All Cities
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" id="selectedCity" style="display: none;">
+                            <span id="cityName"></span>
+                        </li>
+                        <li class="breadcrumb-item active" id="selectedKitchen" style="display: none;">
+                            <span id="kitchenName"></span>
+                        </li>
+                    </ol>
+                </nav>
+
+                <!-- Summary Stats -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h5 id="totalUsers">0</h5>
+                                <small>Total Users</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h5 id="totalCities">0</h5>
+                                <small>Cities</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h5 id="totalKitchens">0</h5>
+                                <small>Kitchens</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-dark">
+                            <div class="card-body text-center">
+                                <h5 id="displayedCount">0</h5>
+                                <small>Displayed Items</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div id="contentArea">
+                    <!-- Cities will be displayed here -->
+                </div>
+
+                <!-- Loading Message -->
+                <div id="loadingMessage" class="text-center text-muted py-4">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Loading data...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allUsers = [];
+        let currentView = 'cities'; // cities, kitchens, employees
+        let selectedCityName = '';
+        let selectedKitchenId = '';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsersData();
+        });
+
+        async function loadUsersData() {
+            try {
+                const response = await fetch('/api/users');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch users');
+                }
+                allUsers = await response.json();
+
+                document.getElementById('loadingMessage').style.display = 'none';
+
+                showCities();
+                updateStats();
+
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                loadFallbackData();
+            }
+        }
+
+        function loadFallbackData() {
+            allUsers = [
+                {
+                    "id": 1,
+                    "name": "System Admin",
+                    "username": "admin",
+                    "role": "admin",
+                    "city": "Mumbai",
+                    "kitchen": "KIT001",
+                    "kitchen_id": 1,
+                    "mobile_no": "9999999999",
+                    "email": "admin@sadakchef.com",
+                    "is_active": true,
+                    "salary": 50000,
+                    "incentive": 5
+                },
+                {
+                    "id": 2,
+                    "name": "neeraj singh",
+                    "username": "neeraj3498",
+                    "role": "kitchen_manager", 
+                    "city": "PRAYAGRAJ",
+                    "kitchen": "zeroroad003LUCKNOW",
+                    "kitchen_id": 2,
+                    "mobile_no": "8423286888",
+                    "email": "neeraj3498singh@gmail.com",
+                    "is_active": true,
+                    "salary": 35000,
+                    "incentive": 3
+                },
+                {
+                    "id": 6,
+                    "name": "sarita singh",
+                    "username": "sarita3498",
+                    "role": "kitchen_manager",
+                    "city": "LUCKNOW",
+                    "kitchen": "zeroroad003LUCKNOW", 
+                    "kitchen_id": 3,
+                    "mobile_no": "8656464564",
+                    "email": "sarita3498@gmail.com",
+                    "is_active": true,
+                    "salary": 22000,
+                    "incentive": 1.5
+                }
+            ];
+
+            document.getElementById('loadingMessage').style.display = 'none';
+            showCities();
+            updateStats();
+
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        }
+
+        function showCities() {
+            currentView = 'cities';
+            selectedCityName = '';
+            selectedKitchenId = '';
+
+            // Update breadcrumb
+            document.getElementById('selectedCity').style.display = 'none';
+            document.getElementById('selectedKitchen').style.display = 'none';
+
+            // Get unique cities
+            const cities = [...new Set(allUsers.map(user => user.city).filter(city => city && city !== 'No Kitchen'))];
+
+            const contentArea = document.getElementById('contentArea');
+            contentArea.innerHTML = `
+                <h5><i data-feather="globe" class="me-2"></i>Select a City</h5>
+                <div class="row">
+                    ${cities.map(city => {
+                        const userCount = allUsers.filter(user => user.city === city).length;
+                        const kitchenCount = new Set(allUsers.filter(user => user.city === city).map(user => user.kitchen)).size;
+
+                        return `
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-primary hover-card" onclick="showKitchens('${city}')" style="cursor: pointer;">
+                                    <div class="card-body text-center">
+                                        <i data-feather="map-pin" class="text-primary mb-2" style="width: 48px; height: 48px;"></i>
+                                        <h5 class="card-title">${city}</h5>
+                                        <p class="card-text">
+                                            <span class="badge bg-info me-1">${kitchenCount} Kitchens</span>
+                                            <span class="badge bg-success">${userCount} Users</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            document.getElementById('displayedCount').textContent = cities.length;
+
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        }
+
+        function showKitchens(cityName) {
+            currentView = 'kitchens';
+            selectedCityName = cityName;
+
+            // Update breadcrumb
+            document.getElementById('selectedCity').style.display = 'list-item';
+            document.getElementById('cityName').textContent = cityName;
+            document.getElementById('selectedKitchen').style.display = 'none';
+
+            // Get unique kitchens for this city using Map to avoid duplicates
+            const kitchenMap = new Map();
+            allUsers
+                .filter(user => user.city === cityName && user.kitchen && user.kitchen !== 'No Kitchen')
+                .forEach(user => {
+                    if (!kitchenMap.has(user.kitchen)) {
+                        kitchenMap.set(user.kitchen, {
+                            id: user.kitchen_id,
+                            name: user.kitchen
+                        });
+                    }
+                });
+
+            const kitchens = Array.from(kitchenMap.values());
+
+            const contentArea = document.getElementById('contentArea');
+            contentArea.innerHTML = `
+                <h5><i data-feather="home" class="me-2"></i>Kitchens in ${cityName}</h5>
+                <div class="row">
+                    ${kitchens.map(kitchen => {
+                        const userCount = allUsers.filter(user => user.city === cityName && user.kitchen === kitchen.name).length;
+
+                        return `
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-success hover-card" onclick="showEmployees('${kitchen.name}', ${kitchen.id})" style="cursor: pointer;">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <i data-feather="home" class="text-success me-3" style="width: 40px; height: 40px;"></i>
+                                            <div>
+                                                <h6 class="card-title mb-1">${kitchen.name}</h6>
+                                                <p class="card-text mb-0">
+                                                    <span class="badge bg-primary">${userCount} Employees</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            document.getElementById('displayedCount').textContent = kitchens.length;
+
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        }
+
+        function showEmployees(kitchenName, kitchenId) {
+            currentView = 'employees';
+            selectedKitchenId = kitchenId;
+
+            // Update breadcrumb
+            document.getElementById('selectedKitchen').style.display = 'list-item';
+            document.getElementById('kitchenName').textContent = kitchenName;
+
+            // Get employees for this kitchen
+            const employees = allUsers.filter(user => user.kitchen === kitchenName);
+
+            const contentArea = document.getElementById('contentArea');
+            contentArea.innerHTML = `
+                <h5><i data-feather="users" class="me-2"></i>Employees at ${kitchenName}</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Mobile</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${employees.map(user => `
+                                <tr>
+                                    <td><strong>${user.name}</strong></td>
+                                    <td>${user.username}</td>
+                                    <td><span class="badge bg-${getRoleBadgeColor(user.role)}">${formatRole(user.role)}</span></td>
+                                    <td>${user.mobile_no || 'Not provided'}</td>
+                                    <td>${user.email || 'Not provided'}</td>
+                                    <td>
+                                        <span class="badge bg-${user.is_active ? 'success' : 'danger'}">
+                                            ${user.is_active ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-primary" onclick="editUser(${user.id})" title="Edit">
+                                                <i data-feather="edit-2" style="width: 16px; height: 16px;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" onclick="viewUser(${user.id})" title="View">
+                                                <i data-feather="eye" style="width: 16px; height: 16px;"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            document.getElementById('displayedCount').textContent = employees.length;
+
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        }
+
+        function formatRole(role) {
+            return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function getRoleBadgeColor(role) {
+            const colors = {
+                'admin': 'danger',
+                'kitchen_manager': 'warning',
+                'cart_staff': 'primary',
+                'delivery_staff': 'info'
+            };
+            return colors[role] || 'secondary';
+        }
+
+        function updateStats() {
+            const totalUsers = allUsers.length;
+            const totalCities = new Set(allUsers.map(user => user.city).filter(city => city && city !== 'No Kitchen')).size;
+            const totalKitchens = new Set(allUsers.map(user => user.kitchen).filter(kitchen => kitchen && kitchen !== 'No Kitchen')).size;
+
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('totalCities').textContent = totalCities;
+            document.getElementById('totalKitchens').textContent = totalKitchens;
+        }
+
+        function viewUser(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+                const details = `
+User Details:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Name: ${user.name}
+Username: ${user.username}
+Role: ${formatRole(user.role)}
+City: ${user.city || 'Not assigned'}
+Kitchen: ${user.kitchen || 'Not assigned'}
+Mobile: ${user.mobile_no || 'Not provided'}
+Email: ${user.email || 'Not provided'}
+Status: ${user.is_active ? 'Active' : 'Inactive'}
+Salary: ₹${user.salary || 0}
+Incentive: ₹${user.incentive || 0} per kg
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                `;
+                alert(details);
+            }
+        }
+
+        function editUser(userId) {
+            window.location.href = `/admin/edit_user/${userId}`;
+        }
+
+        // Handle location field based on role selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('roleSelect');
+            const citySelect = document.getElementById('citySelect');
+            const kitchenSelect = document.getElementById('kitchenSelect');
+            const locationInput = document.getElementById('locationInput');
+
+            function handleLocationField() {
+                const selectedRole = roleSelect.value;
+                const selectedKitchen = kitchenSelect.value;
+
+                if (selectedRole === 'cart_staff') {
+                    locationInput.readOnly = false;
+                    locationInput.value = '';
+                    locationInput.placeholder = 'Enter cart location (e.g., Station Road, Market Area)';
+                    document.getElementById('locationHelp').textContent = 'Enter the specific location where your cart will operate.';
+                } else {
+                    locationInput.readOnly = true;
+                    if (selectedKitchen && kitchenSelect.selectedIndex > 0) {
+                        const kitchenText = kitchenSelect.options[kitchenSelect.selectedIndex].text;
+                        const locationMatch = kitchenText.match(/- ([^-]+)$/);
+                        if (locationMatch) {
+                            locationInput.value = locationMatch[1].trim();
+                        }
+                    } else {
+                        locationInput.value = '';
+                    }
+                    locationInput.placeholder = 'Kitchen location will be auto-filled';
+                    document.getElementById('locationHelp').textContent = 'Location will be automatically set based on selected kitchen.';
+                }
+            }
+
+            function updateKitchenOptions() {
+                const selectedCity = citySelect.value;
+                kitchenSelect.innerHTML = '<option value="">-- Select Kitchen --</option>';
+
+                if (selectedCity) {
+                    // Fetch kitchens for the selected city from the API
+                    fetch(`/api/kitchens/${selectedCity}`)
+                        .then(response => response.json())
+                        .then(kitchens => {
+                            kitchens.forEach(kitchen => {
+                                const option = document.createElement('option');
+                                option.value = kitchen.id;
+                                option.textContent = `${kitchen.kitchen_id} - ${kitchen.location}`;
+                                kitchenSelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error fetching kitchens:', error);
+                        });
+                }
+            }
+
+            roleSelect.addEventListener('change', handleLocationField);
+            citySelect.addEventListener('change', function() {
+                updateKitchenOptions();
+                handleLocationField();
+            });
+            kitchenSelect.addEventListener('change', handleLocationField);
+
+            // Initialize fields
+            handleLocationField();
+
+            // Form validation
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const username = document.querySelector('input[name="username"]').value;
+                const password = document.querySelector('input[name="password"]').value;
+                const confirmPassword = document.querySelector('input[name="confirm_password"]').value;
+
+                if (password !== confirmPassword) {
+                    e.preventDefault();
+                    alert('Passwords do not match!');
+                    return false;
+                }
+
+                if (username.length < 3) {
+                    e.preventDefault();
+                    alert('Username must be at least 3 characters long!');
+                    return false;
+                }
+
+                if (password.length < 6) {
+                    e.preventDefault();
+                    alert('Password must be at least 6 characters long!');
+                    return false;
+                }
+            });
+        });
+    </script>
+
+    <style>
+        .hover-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .breadcrumb-item.active {
+            color: #6c757d !important;
+        }
+
+        .breadcrumb-item a {
+            color: #0d6efd;
+        }
+
+        .breadcrumb-item a:hover {
+            text-decoration: underline !important;
+        }
+    </style>
+</div>
+{% endblock %}

@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Feedback - SadakChef{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i data-feather="message-square" class="me-2"></i>Customer Feedback</h1>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#qrModal">
+        <i data-feather="qr-code" class="me-1"></i>Show QR Code
+    </button>
+</div>
+
+<!-- Feedback Statistics -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5>{{ feedbacks|selectattr('feedback_type', 'equalto', 'positive')|list|length }}</h5>
+                <p class="mb-0">Positive</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h5>{{ feedbacks|selectattr('feedback_type', 'equalto', 'quality')|list|length }}</h5>
+                <p class="mb-0">Quality Issues</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h5>{{ feedbacks|selectattr('feedback_type', 'equalto', 'service')|list|length }}</h5>
+                <p class="mb-0">Service Issues</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5>{{ feedbacks|selectattr('feedback_type', 'equalto', 'suggestion')|list|length }}</h5>
+                <p class="mb-0">Suggestions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-secondary text-white">
+            <div class="card-body text-center">
+                <h5>{{ feedbacks|selectattr('feedback_type', 'equalto', 'price')|list|length }}</h5>
+                <p class="mb-0">Price Concerns</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5>{{ feedbacks|length }}</h5>
+                <p class="mb-0">Total Feedback</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback List -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5><i data-feather="list" class="me-2"></i>All Feedback</h5>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" onchange="filterByType(this.value)">
+                    <option value="">All Types</option>
+                    <option value="positive">Positive</option>
+                    <option value="quality">Quality Issues</option>
+                    <option value="service">Service Issues</option>
+                    <option value="suggestion">Suggestions</option>
+                    <option value="price">Price Concerns</option>
+                </select>
+                <button class="btn btn-sm btn-outline-secondary" onclick="refreshData()">
+                    <i data-feather="refresh-cw"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if feedbacks %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Comments</th>
+                        <th>Action Taken</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="feedbackTable">
+                    {% for feedback in feedbacks %}
+                    <tr data-type="{{ feedback.feedback_type }}">
+                        <td>
+                            <strong>{{ feedback.date.strftime('%d/%m/%Y') }}</strong><br>
+                            <small class="text-muted">{{ feedback.created_at.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 
+                                'success' if feedback.feedback_type == 'positive' else
+                                'danger' if feedback.feedback_type == 'quality' else
+                                'warning' if feedback.feedback_type == 'service' else
+                                'info' if feedback.feedback_type == 'suggestion' else
+                                'secondary'
+                            }}">
+                                {{ feedback.feedback_type|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <strong>{{ feedback.city }}</strong><br>
+                            <small class="text-muted">Thela: {{ feedback.thela_id }}</small>
+                        </td>
+                        <td>
+                            <div class="feedback-comment">
+                                {{ feedback.comments }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if feedback.action_taken %}
+                                <div class="action-taken">
+                                    {{ feedback.action_taken }}
+                                </div>
+                            {% else %}
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="addAction({{ feedback.id }})">
+                                    <i data-feather="edit" class="me-1"></i>Add Action
+                                </button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if feedback.action_taken %}
+                                <span class="badge bg-success">
+                                    <i data-feather="check-circle" style="width: 12px; height: 12px;"></i>
+                                    Resolved
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i data-feather="clock" style="width: 12px; height: 12px;"></i>
+                                    Pending
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i data-feather="message-square" style="width: 64px; height: 64px;" class="text-muted mb-3"></i>
+            <h5 class="text-muted">No feedback received yet</h5>
+            <p class="text-muted">Customer feedback will appear here when submitted via QR code.</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#qrModal">
+                <i data-feather="qr-code" class="me-2"></i>Show QR Code for Customers
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i data-feather="qr-code" class="me-2"></i>Customer Feedback QR Code
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <img src="{{ qr_code }}" alt="Feedback QR Code" class="img-fluid" style="max-width: 300px;">
+                </div>
+                <h6>Scan to submit feedback</h6>
+                <p class="text-muted">Print this QR code and stick it on your carts for customers to scan and submit feedback.</p>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="printQR()">
+                        <i data-feather="printer" class="me-2"></i>Print QR Code
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="downloadQR()">
+                        <i data-feather="download" class="me-2"></i>Download QR Code
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Action Modal -->
+<div class="modal fade" id="actionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i data-feather="edit" class="me-2"></i>Add Action Taken
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="actionForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Action Taken *</label>
+                        <textarea name="action_taken" class="form-control" rows="4" required
+                                  placeholder="Describe what action was taken to address this feedback..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i data-feather="x" class="me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-feather="save" class="me-2"></i>Save Action
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshData() {
+    location.reload();
+}
+
+function filterByType(type) {
+    const rows = document.querySelectorAll('#feedbackTable tr');
+    
+    rows.forEach(row => {
+        if (!type || row.dataset.type === type) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function addAction(feedbackId) {
+    // In a real implementation, this would set the form action to update the feedback
+    document.getElementById('actionForm').action = `/kitchen/feedback/${feedbackId}/action`;
+    new bootstrap.Modal(document.getElementById('actionModal')).show();
+}
+
+function printQR() {
+    const qrImage = document.querySelector('#qrModal img');
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Customer Feedback QR Code</title>
+                <style>
+                    body { 
+                        text-align: center; 
+                        padding: 20px; 
+                        font-family: Arial, sans-serif; 
+                    }
+                    img { 
+                        max-width: 300px; 
+                        margin: 20px 0; 
+                    }
+                    h2 { 
+                        color: #333; 
+                        margin-bottom: 10px; 
+                    }
+                    p { 
+                        color: #666; 
+                        margin: 10px 0; 
+                    }
+                </style>
+            </head>
+            <body>
+                <h2>SadakChef Customer Feedback</h2>
+                <img src="${qrImage.src}" alt="Feedback QR Code">
+                <p>Scan this QR code to submit your feedback</p>
+                <p>Your feedback helps us serve you better!</p>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function downloadQR() {
+    const qrImage = document.querySelector('#qrModal img');
+    const link = document.createElement('a');
+    link.download = 'sadakchef-feedback-qr.png';
+    link.href = qrImage.src;
+    link.click();
+}
+
+// Auto-refresh every 2 minutes
+setInterval(refreshData, 120000);
+
+// Truncate long comments
+document.addEventListener('DOMContentLoaded', function() {
+    const comments = document.querySelectorAll('.feedback-comment');
+    comments.forEach(comment => {
+        if (comment.textContent.length > 100) {
+            const originalText = comment.textContent;
+            const truncatedText = originalText.substring(0, 100) + '...';
+            comment.textContent = truncatedText;
+            comment.style.cursor = 'pointer';
+            comment.title = originalText;
+            comment.addEventListener('click', function() {
+                if (this.textContent.includes('...')) {
+                    this.textContent = originalText;
+                } else {
+                    this.textContent = truncatedText;
+                }
+            });
+        }
+    });
+    
+    const actions = document.querySelectorAll('.action-taken');
+    actions.forEach(action => {
+        if (action.textContent.length > 100) {
+            const originalText = action.textContent;
+            const truncatedText = originalText.substring(0, 100) + '...';
+            action.textContent = truncatedText;
+            action.style.cursor = 'pointer';
+            action.title = originalText;
+            action.addEventListener('click', function() {
+                if (this.textContent.includes('...')) {
+                    this.textContent = originalText;
+                } else {
+                    this.textContent = truncatedText;
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

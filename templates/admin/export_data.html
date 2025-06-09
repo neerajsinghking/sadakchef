@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Export Data - SadakChef{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="download" class="me-2"></i>Export Database Tables</h4>
+                <p class="mb-0">Download Excel files of any database table</p>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-4">
+                        <label class="form-label">Select Table to Export</label>
+                        <select name="table_name" class="form-select form-select-lg" required>
+                            <option value="">Choose a table...</option>
+                            {% for table_key, table_name in tables %}
+                            <option value="{{ table_key }}">{{ table_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>Export Information:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Files are generated in Excel format (.xlsx)</li>
+                            <li>File name includes the current date</li>
+                            <li>All columns and data will be included</li>
+                            <li>Date/time fields will be formatted for Excel</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                            <i data-feather="arrow-left" class="me-2"></i>Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="download" class="me-2"></i>Download Excel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Export History -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i data-feather="clock" class="me-2"></i>Quick Export Options</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i data-feather="users" class="me-2"></i>User Management</h6>
+                                <p class="small text-muted">Export all user accounts and their details</p>
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="table_name" value="users">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        <i data-feather="download" class="me-1"></i>Export Users
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i data-feather="dollar-sign" class="me-2"></i>Sales Data</h6>
+                                <p class="small text-muted">Export all daily sales records</p>
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="table_name" value="daily_sales">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i data-feather="download" class="me-1"></i>Export Sales
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i data-feather="package" class="me-2"></i>Inventory Data</h6>
+                                <p class="small text-muted">Export current inventory status</p>
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="table_name" value="inventory_tracker">
+                                    <button type="submit" class="btn btn-sm btn-outline-info">
+                                        <i data-feather="download" class="me-1"></i>Export Inventory
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i data-feather="message-square" class="me-2"></i>Customer Feedback</h6>
+                                <p class="small text-muted">Export all customer feedback data</p>
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="table_name" value="customer_feedback">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                        <i data-feather="download" class="me-1"></i>Export Feedback
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add loading state to form submission
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const button = this.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Exporting...';
+            button.disabled = true;
+            
+            // Re-enable after 3 seconds (in case of error)
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 3000);
+        });
+    });
+});
+</script>
+{% endblock %}

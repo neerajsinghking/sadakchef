@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Sales Entry{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i data-feather="dollar-sign" class="me-2"></i>Daily Sales Entry</h2>
+                <a href="{{ url_for('cart_dashboard') }}" class="btn btn-outline-secondary">
+                    <i data-feather="arrow-left" class="me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i data-feather="edit-3" class="me-2"></i>Enter Today's Sales Data</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.sop_id.id }}" class="form-label">Recipe</label>
+                                {{ form.sop_id(class="form-select") }}
+                                {% if form.sop_id.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.sop_id.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.kg_unsold.id }}" class="form-label">Kg Unsold</label>
+                                {{ form.kg_unsold(class="form-control", placeholder="Enter unsold quantity") }}
+                                {% if form.kg_unsold.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.kg_unsold.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.cash_collected.id }}" class="form-label">Cash Collected (₹)</label>
+                                {{ form.cash_collected(class="form-control", placeholder="Enter cash amount") }}
+                                {% if form.cash_collected.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.cash_collected.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Auto-calculated Results Section -->
+                        <div class="card bg-light mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i data-feather="calculator" class="me-2"></i>Auto-calculated Results</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <td>Kg Taken:</td>
+                                                <td id="kgTaken" class="text-end">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Kg Sold:</td>
+                                                <td id="kgSold" class="text-end">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Recipe Rate:</td>
+                                                <td id="recipeRate" class="text-end">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Expected Revenue:</td>
+                                                <td id="expectedRevenue" class="text-end">-</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <td>UPI Collected:</td>
+                                                <td id="upiCollected" class="text-end">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Total Revenue:</td>
+                                                <td id="totalRevenue" class="text-end">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Incentive per kg:</td>
+                                                <td id="incentivePerKg" class="text-end">₹{{ current_user.incentive }}/kg</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Total Incentive:</td>
+                                                <td id="totalIncentive" class="text-end">-</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('cart_dashboard') }}" class="btn btn-secondary">
+                                <i data-feather="x" class="me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i data-feather="save" class="me-2"></i>Submit Sales Entry
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i data-feather="user" class="me-2"></i>Your Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Name:</strong></td>
+                            <td>{{ current_user.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Kitchen:</strong></td>
+                            <td>{{ current_user.kitchen.city }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Kitchen ID:</strong></td>
+                            <td>{{ current_user.kitchen.kitchen_id }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Incentive Rate:</strong></td>
+                            <td>₹{{ current_user.incentive }}/kg</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Date:</strong></td>
+                            <td>{{ "today" | strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i data-feather="info" class="me-2"></i>Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <ol class="small">
+                        <li>Select the recipe you sold today</li>
+                        <li>Enter the quantity that remained unsold</li>
+                        <li>Enter the total cash amount collected</li>
+                        <li>All other fields will be calculated automatically</li>
+                        <li>Submit the form to record your daily sales</li>
+                    </ol>
+                    
+                    <div class="alert alert-warning alert-sm mt-3">
+                        <small><i data-feather="alert-triangle" class="me-1"></i>Note: You can only submit sales entry once per recipe per day.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Recipe data from server
+    const recipes = {
+    {%- for choice in form.sop_id.choices %}
+        "{{ choice[0] }}": {
+            id: {{ choice[0] }},
+            name: "{{ choice[1] }}"
+        }{% if not loop.last %},{% endif %}
+    {%- endfor %}
+    };
+
+    // Auto-calculate preview when values change
+    document.addEventListener('DOMContentLoaded', function() {
+        const sopSelect = document.getElementById('{{ form.sop_id.id }}');
+        const unsoldInput = document.getElementById('{{ form.kg_unsold.id }}');
+        const cashInput = document.getElementById('{{ form.cash_collected.id }}');
+        
+        // Get today's refill requests for the selected recipe
+        async function getRefillData(sopId) {
+            try {
+                const response = await fetch(`/api/refills/today/${sopId}`);
+                const data = await response.json();
+                return data.kg_taken || 0;
+            } catch (error) {
+                console.error('Error fetching refill data:', error);
+                return 0;
+            }
+        }
+
+        // Get recipe rate for the selected recipe
+        async function getRecipeRate(sopId) {
+            try {
+                const response = await fetch(`/api/recipe/${sopId}`);
+                const data = await response.json();
+                return data.recipe_rate || 0;
+            } catch (error) {
+                console.error('Error fetching recipe rate:', error);
+                return 0;
+            }
+        }
+        
+        async function updateCalculations() {
+            const sopId = sopSelect.value;
+            const kgUnsold = parseFloat(unsoldInput.value) >= 0 ? parseFloat(unsoldInput.value) : 0;
+            const cashCollected = parseFloat(cashInput.value) >= 0 ? parseFloat(cashInput.value) : 0;
+            
+            if (!sopId) {
+                return;
+            }
+
+            try {
+                // Get required data
+                const kgTaken = await getRefillData(sopId);
+                const recipeRate = await getRecipeRate(sopId);
+                const incentiveRate = {{ current_user.incentive }};
+
+                // Calculate values
+                const kgSold = Math.max(0, kgTaken - kgUnsold);
+                const expectedRevenue = kgSold * recipeRate;
+                const upiCollected = Math.max(0, expectedRevenue - cashCollected);
+                const totalRevenue = cashCollected + upiCollected;
+                const totalIncentive = kgSold * incentiveRate;
+
+                // Update display
+                document.getElementById('kgTaken').textContent = kgTaken.toFixed(2) + ' kg';
+                document.getElementById('kgSold').textContent = kgSold.toFixed(2) + ' kg';
+                document.getElementById('recipeRate').textContent = '₹' + recipeRate.toFixed(2);
+                document.getElementById('expectedRevenue').textContent = '₹' + expectedRevenue.toFixed(2);
+                document.getElementById('upiCollected').textContent = '₹' + upiCollected.toFixed(2);
+                document.getElementById('totalRevenue').textContent = '₹' + totalRevenue.toFixed(2);
+                document.getElementById('totalIncentive').textContent = '₹' + totalIncentive.toFixed(2);
+            } catch (error) {
+                console.error('Error updating calculations:', error);
+            }
+        }
+
+        async function getRefillData(sopId) {
+            try {
+                const response = await fetch(`/api/refill_data/${sopId}`);
+                const data = await response.json();
+                return data.kg_taken || 0;
+            } catch (error) {
+                console.error('Error fetching refill data:', error);
+                return 0;
+            }
+        }
+
+        async function getRecipeRate(sopId) {
+            try {
+                const response = await fetch(`/api/recipe_rate/${sopId}`);
+                const data = await response.json();
+                return data.recipe_rate || 0;
+            } catch (error) {
+                console.error('Error fetching recipe rate:', error);
+                return 0;
+            }
+        }
+        
+        sopSelect.addEventListener('change', updateCalculations);
+        unsoldInput.addEventListener('input', updateCalculations);
+        cashInput.addEventListener('input', updateCalculations);
+        
+        // Initial calculation
+        if (sopSelect.value) {
+            updateCalculations();
+        }
+    });
+</script>
+{% endblock %}

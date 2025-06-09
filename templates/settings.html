@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - SadakChef{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i data-feather="settings" class="me-2"></i>Settings</h1>
+    <span class="badge bg-primary fs-6">{{ current_user.name }}</span>
+</div>
+
+<div class="row">
+    <!-- Profile Settings -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="user" class="me-2"></i>Profile Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ profile_form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ profile_form.name.label(class="form-label") }}
+                        {{ profile_form.name(class="form-control") }}
+                        {% if profile_form.name.errors %}
+                            <div class="text-danger small">
+                                {% for error in profile_form.name.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ profile_form.mobile_no.label(class="form-label") }}
+                        {{ profile_form.mobile_no(class="form-control") }}
+                        {% if profile_form.mobile_no.errors %}
+                            <div class="text-danger small">
+                                {% for error in profile_form.mobile_no.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ profile_form.email.label(class="form-label") }}
+                        {{ profile_form.email(class="form-control") }}
+                        {% if profile_form.email.errors %}
+                            <div class="text-danger small">
+                                {% for error in profile_form.email.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ profile_form.address.label(class="form-label") }}
+                        {{ profile_form.address(class="form-control", rows="3") }}
+                        {% if profile_form.address.errors %}
+                            <div class="text-danger small">
+                                {% for error in profile_form.address.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" name="profile_submit" class="btn btn-primary">
+                        <i data-feather="save" class="me-2"></i>Update Profile
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Password Change -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="lock" class="me-2"></i>Change Password</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ password_form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ password_form.old_password.label(class="form-label") }}
+                        {{ password_form.old_password(class="form-control") }}
+                        {% if password_form.old_password.errors %}
+                            <div class="text-danger small">
+                                {% for error in password_form.old_password.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ password_form.new_password.label(class="form-label") }}
+                        {{ password_form.new_password(class="form-control") }}
+                        {% if password_form.new_password.errors %}
+                            <div class="text-danger small">
+                                {% for error in password_form.new_password.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Minimum 6 characters</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ password_form.confirm_password.label(class="form-label") }}
+                        {{ password_form.confirm_password(class="form-control") }}
+                        {% if password_form.confirm_password.errors %}
+                            <div class="text-danger small">
+                                {% for error in password_form.confirm_password.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" name="password_submit" class="btn btn-warning">
+                        <i data-feather="key" class="me-2"></i>Change Password
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- User Information -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i data-feather="info" class="me-2"></i>Account Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">Username:</small>
+                        <p class="mb-2">{{ current_user.username }}</p>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Role:</small>
+                        <p class="mb-2">{{ current_user.role|replace('_', ' ')|title }}</p>
+                    </div>
+                    {% if current_user.kitchen %}
+                    <div class="col-6">
+                        <small class="text-muted">Kitchen:</small>
+                        <p class="mb-2">{{ current_user.kitchen.kitchen_id }}</p>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">City:</small>
+                        <p class="mb-2">{{ current_user.kitchen.city }}</p>
+                    </div>
+                    {% endif %}
+                    {% if current_user.role == 'cart_staff' %}
+                    <div class="col-6">
+                        <small class="text-muted">Salary:</small>
+                        <p class="mb-2">₹{{ current_user.salary }}</p>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Incentive Rate:</small>
+                        <p class="mb-2">₹{{ current_user.incentive }}/kg</p>
+                    </div>
+                    {% endif %}
+                    <div class="col-12">
+                        <small class="text-muted">Member Since:</small>
+                        <p class="mb-0">{{ current_user.created_at.strftime('%d %B %Y') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

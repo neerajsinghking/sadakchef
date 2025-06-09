@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block title %}Performance Dashboard - SadakChef{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i data-feather="bar-chart-2" class="me-2"></i>Performance Dashboard</h1>
+    <div>
+        <select id="kitchenFilter" class="form-select">
+            <option value="">All Kitchens</option>
+            {% for kitchen in kitchens %}
+            <option value="{{ kitchen.id }}">{{ kitchen.kitchen_id }} - {{ kitchen.city }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- Performance Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="totalRevenue">₹0</h4>
+                        <p class="card-text">Total Revenue (7 days)</p>
+                    </div>
+                    <i data-feather="dollar-sign" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="totalKgSold">0 kg</h4>
+                        <p class="card-text">Total Kg Sold (7 days)</p>
+                    </div>
+                    <i data-feather="package" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="avgFulfillmentTime">0 min</h4>
+                        <p class="card-text">Avg Fulfillment Time</p>
+                    </div>
+                    <i data-feather="clock" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="activeRefills">0</h4>
+                        <p class="card-text">Active Refill Requests</p>
+                    </div>
+                    <i data-feather="refresh-cw" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="trending-up" class="me-2"></i>Daily Sales Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="pie-chart" class="me-2"></i>Kitchen-wise Revenue Share</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="kitchenChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Performance Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="grid" class="me-2"></i>Kitchen Performance Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Kitchen</th>
+                                <th>City</th>
+                                <th>Revenue (7 days)</th>
+                                <th>Kg Sold</th>
+                                <th>Avg Fulfillment</th>
+                                <th>Active Carts</th>
+                                <th>Efficiency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performanceTable">
+                            <!-- Data will be loaded via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Performance Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="truck" class="me-2"></i>Top Performing Carts</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Cart Staff</th>
+                                <th>Kitchen</th>
+                                <th>Revenue (7 days)</th>
+                                <th>Kg Sold</th>
+                                <th>Efficiency %</th>
+                                <th>Incentive Earned</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartPerformanceTable">
+                            <!-- Data will be loaded via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadPerformanceData();
+    
+    document.getElementById('kitchenFilter').addEventListener('change', function() {
+        loadPerformanceData(this.value);
+    });
+    
+    // Auto-refresh every 2 minutes
+    setInterval(() => {
+        const selectedKitchen = document.getElementById('kitchenFilter').value;
+        loadPerformanceData(selectedKitchen);
+    }, 120000);
+});
+
+function loadPerformanceData(kitchenId = '') {
+    // Simulate API call to load performance data
+    // In a real implementation, this would fetch from the backend
+    
+    // Update summary cards
+    document.getElementById('totalRevenue').textContent = '₹' + (Math.random() * 100000).toFixed(0);
+    document.getElementById('totalKgSold').textContent = (Math.random() * 1000).toFixed(0) + ' kg';
+    document.getElementById('avgFulfillmentTime').textContent = (Math.random() * 60).toFixed(0) + ' min';
+    document.getElementById('activeRefills').textContent = Math.floor(Math.random() * 20);
+    
+    // Load charts
+    loadSalesChart();
+    loadKitchenChart();
+    loadPerformanceTable();
+    loadCartPerformanceTable();
+}
+
+function loadSalesChart() {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    
+    const data = {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+            label: 'Revenue',
+            data: [12000, 15000, 18000, 14000, 16000, 20000, 22000],
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            tension: 0.4
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function loadKitchenChart() {
+    const ctx = document.getElementById('kitchenChart').getContext('2d');
+    
+    const data = {
+        labels: ['Mumbai', 'Delhi', 'Bangalore', 'Chennai'],
+        datasets: [{
+            data: [40, 30, 20, 10],
+            backgroundColor: [
+                '#0d6efd',
+                '#198754',
+                '#ffc107',
+                '#dc3545'
+            ]
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function loadPerformanceTable() {
+    const tableBody = document.getElementById('performanceTable');
+    const kitchens = [
+        { id: 'KIT001', city: 'Mumbai', revenue: 50000, kgSold: 250, avgFulfillment: 25, activeCarts: 5, efficiency: 92 },
+        { id: 'KIT002', city: 'Delhi', revenue: 45000, kgSold: 220, avgFulfillment: 28, activeCarts: 4, efficiency: 88 },
+        { id: 'KIT003', city: 'Bangalore', revenue: 38000, kgSold: 190, avgFulfillment: 22, activeCarts: 4, efficiency: 95 }
+    ];
+    
+    tableBody.innerHTML = '';
+    
+    kitchens.forEach(kitchen => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${kitchen.id}</strong></td>
+            <td>${kitchen.city}</td>
+            <td>₹${kitchen.revenue.toLocaleString()}</td>
+            <td>${kitchen.kgSold} kg</td>
+            <td>${kitchen.avgFulfillment} min</td>
+            <td>${kitchen.activeCarts}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="progress me-2" style="width: 60px;">
+                        <div class="progress-bar ${kitchen.efficiency >= 90 ? 'bg-success' : kitchen.efficiency >= 80 ? 'bg-warning' : 'bg-danger'}" 
+                             style="width: ${kitchen.efficiency}%"></div>
+                    </div>
+                    <span>${kitchen.efficiency}%</span>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+function loadCartPerformanceTable() {
+    const tableBody = document.getElementById('cartPerformanceTable');
+    const carts = [
+        { staff: 'Rajesh Kumar', kitchen: 'Mumbai', revenue: 15000, kgSold: 75, efficiency: 95, incentive: 3750 },
+        { staff: 'Amit Singh', kitchen: 'Delhi', revenue: 14000, kgSold: 70, efficiency: 92, incentive: 3500 },
+        { staff: 'Suresh Sharma', kitchen: 'Mumbai', revenue: 13500, kgSold: 68, efficiency: 90, incentive: 3400 }
+    ];
+    
+    tableBody.innerHTML = '';
+    
+    carts.forEach(cart => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${cart.staff}</strong></td>
+            <td>${cart.kitchen}</td>
+            <td>₹${cart.revenue.toLocaleString()}</td>
+            <td>${cart.kgSold} kg</td>
+            <td>
+                <span class="badge ${cart.efficiency >= 90 ? 'bg-success' : cart.efficiency >= 80 ? 'bg-warning' : 'bg-danger'}">
+                    ${cart.efficiency}%
+                </span>
+            </td>
+            <td>₹${cart.incentive}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+</script>
+{% endblock %}

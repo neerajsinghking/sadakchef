@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}Kitchen Dashboard - SadakChef{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i data-feather="users" class="me-2"></i>Kitchen Manager Dashboard</h1>
+    <div class="d-flex gap-2">
+        <span class="badge bg-primary fs-6">{{ current_user.kitchen.city }}</span>
+        <span class="badge bg-secondary fs-6">{{ current_user.kitchen.kitchen_id }}</span>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ pending_refills|length }}</h4>
+                        <p class="card-text">Pending Refills</p>
+                    </div>
+                    <i data-feather="clock" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ low_stock|length }}</h4>
+                        <p class="card-text">Low Stock Items</p>
+                    </div>
+                    <i data-feather="alert-triangle" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ completed_refills }}</h4>
+                        <p class="card-text">Completed Today</p>
+                    </div>
+                    <i data-feather="check-circle" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="currentTime">00:00:00 PM</h4>
+                        <p class="card-text">Current Time</p>
+                    </div>
+                    <i data-feather="clock" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="zap" class="me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-lg-2 mb-2">
+                        <a href="{{ url_for('kitchen_refill_requests') }}" class="btn btn-outline-warning w-100">
+                            <i data-feather="list" class="mb-1"></i><br>View Refills
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-lg-2 mb-2">
+                        <a href="{{ url_for('kitchen_inventory') }}" class="btn btn-outline-info w-100">
+                            <i data-feather="package" class="mb-1"></i><br>Check Inventory
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-lg-2 mb-2">
+                        <a href="{{ url_for('kitchen_supplier_purchase') }}" class="btn btn-outline-success w-100">
+                            <i data-feather="shopping-cart" class="mb-1"></i><br>Add Purchase
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-lg-2 mb-2">
+                        <a href="{{ url_for('kitchen_add_staff') }}" class="btn btn-outline-primary w-100">
+                            <i data-feather="user-plus" class="mb-1"></i><br>Add Staff
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-lg-2 mb-2">
+                        <a href="{{ url_for('kitchen_sales') }}" class="btn btn-outline-success w-100">
+                            <i data-feather="bar-chart" class="mb-1"></i><br>Sales
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-lg-2 mb-2">
+                        <a href="{{ url_for('kitchen_feedback') }}" class="btn btn-outline-secondary w-100">
+                            <i data-feather="message-square" class="mb-1"></i><br>Feedback
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Staff Status and Sales Chart -->
+<div class="row mb-4">
+    <!-- Staff Status -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="users" class="me-2"></i>Staff Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-around">
+                    <div class="text-center">
+                        <div class="fs-1 mb-2">{{ cart_staff }}</div>
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i data-feather="shopping-cart" class="me-2"></i>
+                            <span>Cart Staff</span>
+                        </div>
+                        <div class="badge bg-success mt-2">Active</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="fs-1 mb-2">{{ delivery_staff }}</div>
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i data-feather="truck" class="me-2"></i>
+                            <span>Delivery Staff</span>
+                        </div>
+                        <div class="badge bg-success mt-2">Active</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7 Days Sales Chart -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="bar-chart-2" class="me-2"></i>Last 7 Days Sales</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Refill Requests -->
+{% if pending_refills %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5><i data-feather="clock" class="me-2"></i>Pending Refill Requests</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Cart Staff</th>
+                                <th>Recipe</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for refill in pending_refills %}
+                            <tr>
+                                <td>
+                                    <small>{{ refill.request_time.strftime('%H:%M') }}</small><br>
+                                    <span class="text-muted">{{ refill.request_time.strftime('%d/%m') }}</span>
+                                </td>
+                                <td><strong>{{ refill.cart_staff.name }}</strong></td>
+                                <td>{{ refill.sop.recipe_name }}</td>
+                                <td><span class="badge bg-info">{{ refill.kg_request }} kg</span></td>
+                                <td>
+                                    <span class="badge bg-warning">{{ refill.status|replace('_', ' ')|title }}</span>
+                                </td>
+                                <td>
+                                    {% if refill.status == 'requested' %}
+                                    <a href="{{ url_for('kitchen_accept_refill', refill_id=refill.id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i data-feather="play" class="me-1"></i>Accept
+                                    </a>
+                                    {% elif refill.status == 'taken_by_chef' %}
+                                    <button class="btn btn-sm btn-success" onclick="markPrepared({{ refill.id }})">
+                                        <i data-feather="check" class="me-1"></i>Mark Prepared
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Low Stock Alert -->
+{% if low_stock %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5><i data-feather="alert-triangle" class="me-2"></i>Low Stock Alert</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for item in low_stock %}
+                    <div class="col-md-6 mb-3">
+                        <div class="alert alert-{{ 'danger' if item.status == 'Critical' else 'warning' }} mb-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ item.ingredient.name }}</strong><br>
+                                    <small>Current: {{ item.closing_stock }} {{ item.ingredient.unit }}</small><br>
+                                    <small>Minimum: {{ item.min_threshold }} {{ item.ingredient.unit }}</small>
+                                </div>
+                                <span class="badge bg-{{ 'danger' if item.status == 'Critical' else 'warning' }}">
+                                    {{ item.status }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <a href="{{ url_for('kitchen_supplier_purchase') }}" class="btn btn-primary">
+                    <i data-feather="shopping-cart" class="me-2"></i>Add Purchase
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Mark Prepared Modal -->
+<div class="modal fade" id="preparedModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mark as Prepared</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="preparedForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Quality Status</label>
+                        <select name="quality_status" class="form-select" required>
+                            <option value="verified">Quality Verified</option>
+                            <option value="issue">Quality Issue</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quality Notes (Optional)</label>
+                        <textarea name="quality_notes" class="form-control" rows="3" 
+                                  placeholder="Any notes about the preparation..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i data-feather="check" class="me-2"></i>Mark Prepared
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-IN', { 
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true 
+        });
+        document.getElementById('currentTime').textContent = timeString + ' IST';
+    }
+
+    // Update time every second
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Sales Chart
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ sales_dates|tojson }},
+            datasets: [{
+                label: 'Daily Sales (₹)',
+                data: {{ sales_values|tojson }},
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '₹' + context.parsed.y;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Mark prepared function
+    function markPrepared(refillId) {
+        const qualityStatus = prompt('Enter quality status (verified/needs_improvement):', 'verified');
+        if (!qualityStatus) return;
+
+        const qualityNotes = prompt('Enter quality notes (optional):', '');
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/kitchen/mark_prepared/${refillId}`;
+
+        const statusInput = document.createElement('input');
+        statusInput.type = 'hidden';
+        statusInput.name = 'quality_status';
+        statusInput.value = qualityStatus;
+        form.appendChild(statusInput);
+
+        const notesInput = document.createElement('input');
+        notesInput.type = 'hidden';
+        notesInput.name = 'quality_notes';
+        notesInput.value = qualityNotes || '';
+        form.appendChild(notesInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+});
+</script>
+{% endblock %}

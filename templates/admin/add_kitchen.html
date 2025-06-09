@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Add Kitchen - SadakChef{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="plus-square" class="me-2"></i>Add New Kitchen</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.city.label(class="form-label") }}
+                            {{ form.city(class="form-control") }}
+                            {% if form.city.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.city.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.location.label(class="form-label") }}
+                            {{ form.location(class="form-control") }}
+                            {% if form.location.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.location.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.address.label(class="form-label") }}
+                        {{ form.address(class="form-control", rows="4") }}
+                        {% if form.address.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.address.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        Kitchen ID will be auto-generated in format: Location + ID + City (e.g., Andheri001Mumbai)
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                            <i data-feather="arrow-left" class="me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="plus-square" class="me-2"></i>Add Kitchen
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Existing Kitchens List -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i data-feather="list" class="me-2"></i>All Kitchens</h5>
+            </div>
+            <div class="card-body">
+                {% if kitchens %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Kitchen ID</th>
+                                <th>City</th>
+                                <th>Location</th>
+                                <th>Address</th>
+                                <th>Created Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for kitchen in kitchens %}
+                            <tr>
+                                <td><strong>{{ kitchen.kitchen_id }}</strong></td>
+                                <td>{{ kitchen.city }}</td>
+                                <td>{{ kitchen.location }}</td>
+                                <td>{{ kitchen.address[:50] }}{% if kitchen.address|length > 50 %}...{% endif %}</td>
+                                <td>{{ kitchen.created_at.strftime('%d %b %Y') }}</td>
+                                <td>
+                                    {% if kitchen.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <i data-feather="info" class="me-2"></i>
+                    No kitchens found. Add the first kitchen using the form above.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

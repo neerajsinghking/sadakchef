@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - SadakChef{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i data-feather="monitor" class="me-2"></i>Admin Dashboard</h1>
+    <span class="badge bg-primary fs-6">{{ current_user.role|title }}</span>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_kitchens }}</h4>
+                        <p class="card-text">Active Kitchens</p>
+                    </div>
+                    <i data-feather="home" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_users }}</h4>
+                        <p class="card-text">Total Users</p>
+                    </div>
+                    <i data-feather="users" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_carts }}</h4>
+                        <p class="card-text">Active Carts</p>
+                    </div>
+                    <i data-feather="shopping-cart" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ alerts|length }}</h4>
+                        <p class="card-text">Active Alerts</p>
+                    </div>
+                    <i data-feather="alert-triangle" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="zap" class="me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 mb-2">
+                        <a href="{{ url_for('admin_add_user') }}" class="btn btn-outline-primary w-100">
+                            <i data-feather="user-plus" class="mb-1"></i><br>Add User
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <a href="{{ url_for('admin_add_kitchen') }}" class="btn btn-outline-success w-100">
+                            <i data-feather="plus-square" class="mb-1"></i><br>Add Kitchen
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <a href="{{ url_for('admin_add_ingredient') }}" class="btn btn-outline-info w-100">
+                            <i data-feather="package" class="mb-1"></i><br>Add Ingredient
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <a href="{{ url_for('admin_add_sop') }}" class="btn btn-outline-warning w-100">
+                            <i data-feather="book" class="mb-1"></i><br>Add SOP
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <a href="{{ url_for('admin_performance') }}" class="btn btn-outline-secondary w-100">
+                            <i data-feather="bar-chart-2" class="mb-1"></i><br>Performance
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <a href="{{ url_for('admin_export_data') }}" class="btn btn-outline-primary w-100">
+                            <i data-feather="download" class="mb-1"></i><br>Export Data
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts Panel -->
+{% if alerts %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5><i data-feather="alert-triangle" class="me-2"></i>System Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% for alert in alerts %}
+                    <div class="alert alert-{{ 
+                        'danger' if alert.type == 'critical' else
+                        'warning' if alert.type == 'warning' else
+                        'info'
+                    }} d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <i data-feather="{{ 
+                                'alert-circle' if alert.type == 'critical' else
+                                'alert-triangle' if alert.type == 'warning' else
+                                'info'
+                            }}" class="me-2"></i>
+                            {{ alert.message }}
+                        </div>
+                        <small class="text-muted">{{ alert.time }}</small>
+                    </div>
+                    {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Activities -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="refresh-cw" class="me-2"></i>Recent Refill Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_refills %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Cart Staff</th>
+                                <th>Recipe</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for refill in recent_refills %}
+                            <tr>
+                                <td>{{ refill.cart_staff.name }}</td>
+                                <td>{{ refill.sop.recipe_name }}</td>
+                                <td>{{ refill.kg_request }} kg</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if refill.status == 'taken_by_cart' else 'warning' }}">
+                                        {{ refill.status|replace('_', ' ')|title }}
+                                    </span>
+                                </td>
+                                <td><small>{{ refill.request_time.strftime('%H:%M') }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No recent refill requests.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="dollar-sign" class="me-2"></i>Recent Sales Entries</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_sales %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Cart Staff</th>
+                                <th>Recipe</th>
+                                <th>Sold</th>
+                                <th>Revenue</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in recent_sales %}
+                            <tr>
+                                <td>{{ sale.cart_staff.name }}</td>
+                                <td>{{ sale.sop.recipe_name }}</td>
+                                <td>{{ sale.kg_sold }} kg</td>
+                                <td>₹{{ sale.total_revenue }}</td>
+                                <td><small>{{ sale.date.strftime('%d/%m') }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No recent sales entries.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh dashboard every 30 seconds
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+</script>
+{% endblock %}

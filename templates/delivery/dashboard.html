@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+
+{% block title %}Delivery Dashboard - SadakChef{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i data-feather="truck" class="me-2"></i>Delivery Staff Dashboard</h1>
+    <div class="d-flex gap-2">
+        <span class="badge bg-primary fs-6">{{ current_user.name }}</span>
+        <span class="badge bg-secondary fs-6">{{ current_user.kitchen.city }}</span>
+    </div>
+</div>
+
+{# Quick Status Overview #}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ available_deliveries|length }}</h4>
+                        <p class="card-text">Available Deliveries</p>
+                    </div>
+                    <i data-feather="package" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ my_deliveries|length }}</h4>
+                        <p class="card-text">My Active Deliveries</p>
+                    </div>
+                    <i data-feather="clock" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ avg_prep_time }} min</h4>
+                        <p class="card-text">Avg Preparation Time</p>
+                    </div>
+                    <i data-feather="clock" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="liveTime">00:00</h4>
+                        <p class="card-text">Current Time</p>
+                    </div>
+                    <i data-feather="clock" style="width: 48px; height: 48px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Performance Statistics #}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="bar-chart-2" class="me-2"></i>Overall Performance</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <i data-feather="package" class="text-primary mb-2" style="width: 32px; height: 32px;"></i>
+                            <h3>{{ "%.1f"|format(total_kg_delivered) }} kg</h3>
+                            <p class="text-muted mb-0">Total Weight Delivered</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <i data-feather="truck" class="text-success mb-2" style="width: 32px; height: 32px;"></i>
+                            <h3>{{ total_deliveries }}</h3>
+                            <p class="text-muted mb-0">Total Deliveries</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <i data-feather="clock" class="text-warning mb-2" style="width: 32px; height: 32px;"></i>
+                            <h3>{{ avg_delivery_time }} min</h3>
+                            <p class="text-muted mb-0">Average Delivery Time</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Deliveries (Available for pickup) -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="package" class="me-2"></i>Today's Deliveries (Ready for Pickup)</h5>
+            </div>
+            <div class="card-body">
+                {% if available_deliveries %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Refill ID</th>
+                                    <th>Cart Staff</th>
+                                    <th>Recipe</th>
+                                    <th>Quantity (kg)</th>
+                                    <th>Prepared Time</th>
+                                    <th>Quality Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for refill in available_deliveries %}
+                                <tr>
+                                    <td>#{{ refill.id }}</td>
+                                    <td>{{ refill.cart_staff.name }}</td>
+                                    <td>{{ refill.sop.recipe_name }}</td>
+                                    <td>{{ refill.kg_request }} kg</td>
+                                    <td>{{ refill.prepared_time.strftime('%H:%M') if refill.prepared_time else '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if refill.quality_status == 'verified' else 'warning' }}">
+                                            {{ refill.quality_status|title if refill.quality_status else 'Verified' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('delivery_pickup', refill_id=refill.id) }}" 
+                                           class="btn btn-primary btn-sm">
+                                            <i data-feather="truck" class="me-1"></i>Pick Up
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i data-feather="package" style="width: 64px; height: 64px;" class="text-muted mb-3"></i>
+                        <h6 class="text-muted">No deliveries available for pickup</h6>
+                        <p class="text-muted">All prepared food has been picked up or no food is ready yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Active Deliveries -->
+{% set my_active_deliveries = completed_deliveries.items | selectattr('delivery_staff_id', 'equalto', current_user.id) | selectattr('status', 'equalto', 'picked_up') | list %}
+{% if my_active_deliveries %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5><i data-feather="truck" class="me-2"></i>My Active Deliveries</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Refill ID</th>
+                                <th>Cart Staff</th>
+                                <th>Recipe</th>
+                                <th>Quantity (kg)</th>
+                                <th>Pickup Time</th>
+                                <th>Location</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for refill in my_active_deliveries %}
+                            <tr>
+                                <td>#{{ refill.id }}</td>
+                                <td>{{ refill.cart_staff.name }}</td>
+                                <td>{{ refill.sop.recipe_name }}</td>
+                                <td>{{ refill.kg_request }} kg</td>
+                                <td>{{ refill.pickup_time.strftime('%H:%M') if refill.pickup_time else '-' }}</td>
+                                <td>{{ refill.cart_staff.location }}</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm" 
+                                            onclick="markDelivered({{ refill.id }})">
+                                        <i data-feather="check-circle" class="me-1"></i>Mark Delivered
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Today's Completed Deliveries -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="user-check" class="me-2"></i>Today's Completed Deliveries</h5>
+            </div>
+            <div class="card-body">
+                {% if my_deliveries %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Refill ID</th>
+                                    <th>Cart Staff</th>
+                                    <th>Recipe</th>
+                                    <th>Quantity (kg)</th>
+                                    <th>Delivered Time</th>
+                                    <th>Status</th>
+                                    <th>Location</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for refill in my_deliveries %}
+                                <tr>
+                                    <td>#{{ refill.id }}</td>
+                                    <td>{{ refill.cart_staff.name }}</td>
+                                    <td>{{ refill.sop.recipe_name }}</td>
+                                    <td>{{ refill.kg_request }} kg</td>
+                                    <td>{{ refill.delivered_time.strftime('%H:%M') if refill.delivered_time else '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-success">Delivered</span>
+                                    </td>
+                                    <td>{{ refill.cart_staff.location }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i data-feather="check-circle" style="width: 64px; height: 64px;" class="text-muted mb-3"></i>
+                        <h6 class="text-muted">No deliveries completed today</h6>
+                        <p class="text-muted">Complete some deliveries to see them here.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Completed Deliveries #}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="check-circle" class="me-2"></i>All Completed Deliveries</h5>
+            </div>
+            <div class="card-body">
+                {% if completed_deliveries.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Refill ID</th>
+                                    <th>Cart Staff</th>
+                                    <th>Recipe</th>
+                                    <th>Quantity (kg)</th>
+                                    <th>Pickup Time</th>
+                                    <th>Delivery Time</th>
+                                    <th>Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for refill in completed_deliveries.items %}
+                                <tr>
+                                    <td>#{{ refill.id }}</td>
+                                    <td>{{ refill.cart_staff.name }}</td>
+                                    <td>{{ refill.sop.recipe_name }}</td>
+                                    <td>{{ refill.kg_request }} kg</td>
+                                    <td>{{ refill.pickup_time.strftime('%d/%m %H:%M') if refill.pickup_time else '-' }}</td>
+                                    <td>{{ refill.delivered_time.strftime('%d/%m %H:%M') if refill.delivered_time else '-' }}</td>
+                                    <td>
+                                        {% if refill.delivered_time and refill.pickup_time %}
+                                            {% set duration = ((refill.delivered_time - refill.pickup_time).total_seconds() / 60)|round|int %}
+                                            <span class="badge bg-{{ 'success' if duration < 30 else 'warning' if duration < 45 else 'danger' }}">
+                                                {{ duration }} min
+                                            </span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i data-feather="check-circle" style="width: 64px; height: 64px;" class="text-muted mb-3"></i>
+                        <h6 class="text-muted">No completed deliveries yet</h6>
+                        <p class="text-muted">Complete some deliveries to see them here.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Pagination -->
+            {% if completed_deliveries.pages > 1 %}
+            <div class="card-footer">
+                <nav aria-label="Completed deliveries pagination">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if completed_deliveries.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('delivery_dashboard', page=completed_deliveries.prev_num) }}">
+                                <i data-feather="chevron-left"></i> Previous
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for page_num in completed_deliveries.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != completed_deliveries.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('delivery_dashboard', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if completed_deliveries.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('delivery_dashboard', page=completed_deliveries.next_num) }}">
+                                Next <i data-feather="chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        Showing {{ (completed_deliveries.page - 1) * 10 + 1 }} to 
+                        {{ completed_deliveries.page * 10 if completed_deliveries.page * 10 < completed_deliveries.total else completed_deliveries.total }} 
+                        of {{ completed_deliveries.total }} completed deliveries
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="zap" class="me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="{{ url_for('delivery_dashboard') }}" class="btn btn-outline-primary w-100 mb-2">
+                            <i data-feather="refresh-cw" class="me-2"></i>Refresh Deliveries
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ url_for('settings') }}" class="btn btn-outline-secondary w-100 mb-2">
+                            <i data-feather="settings" class="me-2"></i>Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function updateTime() {
+        var now = new Date();
+        var timeString = now.toLocaleTimeString('en-IN', { 
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        document.getElementById('liveTime').textContent = timeString;
+    }
+    
+    setInterval(updateTime, 1000);
+    updateTime();
+    
+    function markDelivered(refillId) {
+        if (confirm('Mark this delivery as completed?')) {
+            var url = '/delivery/mark_delivered/' + refillId;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(function(response) {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error marking delivery as completed');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Error marking delivery as completed');
+            });
+        }
+    }
+    
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+    
+    {% if available_deliveries %}
+    var availableCount = {{ available_deliveries|length }};
+    if (availableCount > 0) {
+        console.log(availableCount + ' deliveries available for pickup');
+    }
+    {% endif %}
+</script>
+{% endblock %}

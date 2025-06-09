@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Add Ingredient - SadakChef{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="package" class="me-2"></i>Add New Ingredient</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control") }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.name.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.category.label(class="form-label") }}
+                            {{ form.category(class="form-control") }}
+                            {% if form.category.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.category.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">e.g., Grains, Meat, Vegetables, Spices</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.unit.label(class="form-label") }}
+                            {{ form.unit(class="form-control") }}
+                            {% if form.unit.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.unit.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">e.g., kg, grams, liters, pieces</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.minimum_stock.label(class="form-label") }}
+                        {{ form.minimum_stock(class="form-control") }}
+                        {% if form.minimum_stock.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.minimum_stock.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Alert will be triggered when stock falls below this level</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                            <i data-feather="arrow-left" class="me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="package" class="me-2"></i>Add Ingredient
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Existing Ingredients List -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i data-feather="package" class="me-2"></i>All Ingredients</h5>
+            </div>
+            <div class="card-body">
+                {% if ingredients %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Unit</th>
+                                <th>Minimum Stock</th>
+                                <th>Created Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ingredient in ingredients %}
+                            <tr>
+                                <td><strong>{{ ingredient.name }}</strong></td>
+                                <td><span class="badge bg-secondary">{{ ingredient.category }}</span></td>
+                                <td>{{ ingredient.unit }}</td>
+                                <td>{{ ingredient.minimum_stock }}</td>
+                                <td>{{ ingredient.created_at.strftime('%d %b %Y') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <i data-feather="info" class="me-2"></i>
+                    No ingredients found. Add the first ingredient using the form above.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Feedback - {{ kitchen.city }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3><i data-feather="message-square" class="me-2"></i>SadakChef Feedback</h3>
+                    <p class="mb-0">Your feedback helps us serve you better!</p>
+                </div>
+
+                <div class="card-body">
+                    <!-- Kitchen Info Display -->
+                    <div class="alert alert-info text-center mb-4">
+                        <i data-feather="map-pin" class="me-2"></i>
+                        <strong>Kitchen: {{ kitchen.city }} ({{ kitchen.kitchen_id }})</strong>
+                    </div>
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Hidden City Field (automatically set from kitchen) -->
+                        {{ form.city(value=kitchen.city, style="display: none;") }}
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.thela_id.label(class="form-label") }}
+                                {{ form.thela_id(class="form-select") }}
+                                {% if form.thela_id.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.thela_id.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.feedback_type.label(class="form-label") }}
+                            {{ form.feedback_type(class="form-select") }}
+                            {% if form.feedback_type.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.feedback_type.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.comments.label(class="form-label") }}
+                            {{ form.comments(class="form-control", rows="4", placeholder="Please share your feedback...") }}
+                            {% if form.comments.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.comments.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i data-feather="send" class="me-2"></i>Submit Feedback
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-footer text-center text-muted">
+                    <small>Thank you for helping us improve our service!</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-populate thela options for current kitchen
+    const thelaSelect = document.getElementById('thela_id');
+
+    // Get kitchen-specific carts via API
+    fetch(`/api/kitchen-carts/{{ kitchen.id }}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(carts => {
+            // Clear existing options
+            thelaSelect.innerHTML = '<option value="">Select Thela ID</option>';
+
+            // Check if carts array exists and has data
+            if (carts && carts.length > 0) {
+                // Add cart options
+                carts.forEach(cart => {
+                    const option = document.createElement('option');
+                    option.value = cart.thela_id;
+                    option.textContent = `${cart.thela_id} - ${cart.location}`;
+                    thelaSelect.appendChild(option);
+                });
+            } else {
+                // Add option indicating no carts found
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No thelas found for this kitchen';
+                option.disabled = true;
+                thelaSelect.appendChild(option);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading carts:', error);
+            // Add error option
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'Error loading thelas';
+            option.disabled = true;
+            thelaSelect.appendChild(option);
+        });
+});
+</script>
+{% endblock %}

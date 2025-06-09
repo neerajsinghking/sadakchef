@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Add SOP - SadakChef{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="book" class="me-2"></i>Add New SOP (Standard Operating Procedure)</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.recipe_name.label(class="form-label") }}
+                            {{ form.recipe_name(class="form-control") }}
+                            {% if form.recipe_name.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.recipe_name.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            {{ form.base_quantity.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.base_quantity(class="form-control") }}
+                                <span class="input-group-text">kg</span>
+                            </div>
+                            {% if form.base_quantity.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.base_quantity.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            {{ form.recipe_rate.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                {{ form.recipe_rate(class="form-control") }}
+                                <span class="input-group-text">per kg</span>
+                            </div>
+                            {% if form.recipe_rate.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.recipe_rate.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="3") }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.description.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <h5><i data-feather="package" class="me-2"></i>Ingredients Required</h5>
+                    <p class="text-muted">Add ingredients required for the base quantity (<span id="base-qty-display">5</span> kg)</p>
+
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary" id="addIngredientBtn">
+                            <i data-feather="plus" class="me-2"></i>Add Ingredient
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="ingredientsTable">
+                            <thead>
+                                <tr>
+                                    <th>Ingredient</th>
+                                    <th>Category</th>
+                                    <th>Unit</th>
+                                    <th>Quantity</th>
+                                    <th>Note</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ingredientsTableBody">
+                                <!-- Dynamic ingredients will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="noIngredientsMessage" class="alert alert-info text-center">
+                        <i data-feather="info" class="me-2"></i>
+                        No ingredients added yet. Click "Add Ingredient" to start adding ingredients.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                            <i data-feather="arrow-left" class="me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="addSOPBtn">
+                            <i data-feather="book" class="me-2"></i>Add SOP
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Existing SOPs List -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i data-feather="book" class="me-2"></i>All SOPs (Standard Operating Procedures)</h5>
+            </div>
+            <div class="card-body">
+                {% if sops %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Recipe Name</th>
+                                <th>Base Quantity</th>
+                                <th>Recipe Rate</th>
+                                <th>Description</th>
+                                <th>Created Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sop in sops %}
+                            <tr class="sop-row" style="cursor: pointer;" onclick="toggleIngredients({{ sop.id }})" data-sop-id="{{ sop.id }}">
+                                <td>
+                                    <strong>{{ sop.recipe_name }}</strong>
+                                    <i class="fas fa-chevron-down ms-2"></i>
+                                </td>
+                                <td>{{ sop.base_quantity }} kg</td>
+                                <td>₹{{ sop.recipe_rate }} per kg</td>
+                                <td>{{ sop.description or 'No description' }}</td>
+                                <td>{{ sop.created_at.strftime('%d %b %Y') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if sop.is_active else 'secondary' }}">
+                                        {{ 'Active' if sop.is_active else 'Inactive' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr id="ingredients-{{ sop.id }}" style="display: none;" class="ingredients-row">
+                                <td colspan="6">
+                                    <div class="card bg-light">
+                                        <div class="card-header">
+                                            <h6><i class="fas fa-list-ul me-2"></i>Ingredients for {{ sop.recipe_name }} ({{ sop.base_quantity }} kg)</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if sop.ingredients %}
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Ingredient</th>
+                                                            <th>Quantity</th>
+                                                            <th>Unit</th>
+                                                            <th>Note</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for sop_ingredient in sop.ingredients %}
+                                                        <tr>
+                                                            <td><strong>{{ sop_ingredient.ingredient.name }}</strong></td>
+                                                            <td class="text-primary"><strong>{{ sop_ingredient.quantity }}</strong></td>
+                                                            <td>{{ sop_ingredient.ingredient.unit }}</td>
+                                                            <td class="text-muted">{{ sop_ingredient.note or '-' }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            {% else %}
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                No ingredients added for this recipe yet.
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <i data-feather="info" class="me-2"></i>
+                    No SOPs found. Add the first SOP using the form above.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let ingredientCounter = 0;
+const availableIngredients = {{ ingredients|tojson }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const addIngredientBtn = document.getElementById('addIngredientBtn');
+    const ingredientsTableBody = document.getElementById('ingredientsTableBody');
+    const noIngredientsMessage = document.getElementById('noIngredientsMessage');
+    const baseQuantityInput = document.querySelector('input[name="base_quantity"]');
+    const baseQtyDisplay = document.getElementById('base-qty-display');
+
+    // Update base quantity display when input changes
+    if (baseQuantityInput) {
+        baseQuantityInput.addEventListener('input', function() {
+            baseQtyDisplay.textContent = this.value || '5';
+        });
+    }
+
+    addIngredientBtn.addEventListener('click', function() {
+        addIngredientRow();
+    });
+
+    function addIngredientRow() {
+        ingredientCounter++;
+
+        const row = document.createElement('tr');
+        row.id = `ingredient-row-${ingredientCounter}`;
+
+        // Create ingredient select options
+        let ingredientOptions = '<option value="">Select Ingredient</option>';
+        availableIngredients.forEach(ingredient => {
+            ingredientOptions += `<option value="${ingredient.id}" data-category="${ingredient.category}" data-unit="${ingredient.unit}">${ingredient.name}</option>`;
+        });
+
+        row.innerHTML = `
+            <td>
+                <select name="ingredient_${ingredientCounter}_id" class="form-select ingredient-select" required>
+                    ${ingredientOptions}
+                </select>
+            </td>
+            <td><span class="badge bg-secondary ingredient-category">-</span></td>
+            <td class="ingredient-unit">-</td>
+            <td>
+                <input type="number" name="ingredient_${ingredientCounter}_quantity" 
+                       class="form-control" step="0.01" min="0" placeholder="0" required>
+            </td>
+            <td>
+                <input type="text" name="ingredient_${ingredientCounter}_note" 
+                       class="form-control" placeholder="Optional note">
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-ingredient" data-row="${ingredientCounter}">
+                    <i data-feather="trash-2"></i>
+                </button>
+            </td>
+        `;
+
+        ingredientsTableBody.appendChild(row);
+
+        // Hide no ingredients message
+        noIngredientsMessage.style.display = 'none';
+
+        // Add event listener for ingredient select
+        const ingredientSelect = row.querySelector('.ingredient-select');
+        ingredientSelect.addEventListener('change', function() {
+            const selectedOption = this.selectedOptions[0];
+            const categorySpan = row.querySelector('.ingredient-category');
+            const unitCell = row.querySelector('.ingredient-unit');
+
+            if (selectedOption.value) {
+                categorySpan.textContent = selectedOption.dataset.category;
+                unitCell.textContent = selectedOption.dataset.unit;
+            } else {
+                categorySpan.textContent = '-';
+                unitCell.textContent = '-';
+            }
+        });
+
+        // Add event listener for remove button
+        const removeBtn = row.querySelector('.remove-ingredient');
+        removeBtn.addEventListener('click', function() {
+            removeIngredientRow(this.dataset.row);
+        });
+
+        // Replace feather icons
+        feather.replace();
+    }
+
+    function removeIngredientRow(rowId) {
+        const row = document.getElementById(`ingredient-row-${rowId}`);
+        if (row) {
+            row.remove();
+
+            // Show no ingredients message if no rows left
+            if (ingredientsTableBody.children.length === 0) {
+                noIngredientsMessage.style.display = 'block';
+            }
+        }
+    }
+
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const ingredientRows = ingredientsTableBody.children.length;
+        if (ingredientRows === 0) {
+            e.preventDefault();
+            alert('Please add at least one ingredient to the SOP.');
+            return false;
+        }
+
+        // Check if all ingredient selects have values
+        const ingredientSelects = document.querySelectorAll('.ingredient-select');
+        for (let select of ingredientSelects) {
+            if (!select.value) {
+                e.preventDefault();
+                alert('Please select an ingredient for all rows.');
+                return false;
+            }
+        }
+
+        // Check if all quantities are filled
+        const quantityInputs = document.querySelectorAll('input[name*="_quantity"]');
+        for (let input of quantityInputs) {
+            if (!input.value || parseFloat(input.value) <= 0) {
+                e.preventDefault();
+                alert('Please enter valid quantities for all ingredients.');
+                return false;
+            }
+        }
+    });
+});
+
+function toggleIngredients(sopId) {
+    const ingredientsRow = document.getElementById('ingredients-' + sopId);
+    const sopRow = document.querySelector(`[data-sop-id="${sopId}"]`);
+    const chevronIcon = sopRow.querySelector('i');
+
+    if (ingredientsRow.style.display === 'none' || ingredientsRow.style.display === '') {
+        ingredientsRow.style.display = 'table-row';
+        chevronIcon.className = 'fas fa-chevron-up ms-2';
+    } else {
+        ingredientsRow.style.display = 'none';
+        chevronIcon.className = 'fas fa-chevron-down ms-2';
+    }
+}
+
+// Add hover effect for SOP rows
+document.addEventListener('DOMContentLoaded', function() {
+    const sopRows = document.querySelectorAll('.sop-row');
+    sopRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+});
+</script>
+{% endblock %}
